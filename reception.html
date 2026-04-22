@@ -651,7 +651,7 @@ function renderHistory(){
       <td>${(d.items||[]).map(i=>`x${i.qty} ${i.name}`).join(', ')}</td>
       <td><strong>${(d.total||0).toFixed(2)}€</strong></td>
       <td><span class="status-badge ${d.status}">${d.status.toUpperCase()}</span></td>
-    </tr>`).join('') || '<tr><td colspan="6" class="loading-line">Aucun historique aujourd'hui</td></tr>';
+    </tr>`).join('') || '<tr><td colspan="6" class="loading-line">Aucun historique</td></tr>';
 }
 
 setInterval(()=>{
