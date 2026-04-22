@@ -317,7 +317,6 @@ input[type=checkbox].toggle:checked::after{left:23px;}
   <div class="topbar">
     <div class="page-title" id="page-title">Commandes en Cours</div>
     <div class="topbar-stats">
-      <button onclick="testFirebase()" style="background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid var(--gold-dim);border-radius:6px;padding:5px 12px;font-size:10px;font-weight:700;letter-spacing:1px;cursor:pointer;text-transform:uppercase;font-family:'Lato',sans-serif;transition:all .2s;" title="Write a test order to Firebase to verify connection">🧪 Test</button>
       <div class="stat-chip pending" onclick="showTab('live');filterOrders('pending')">
         <span id="t-pending">0</span>&nbsp;En attente
       </div>
@@ -535,9 +534,7 @@ const firebaseConfig = {
   appId: "1:347604539540:web:78fc0e40fa8fee5bca63c8"
 };
 const app = initializeApp(firebaseConfig);
-console.log('[Reception] Firebase app initialized');
 const db = getFirestore(app);
-console.log('[Reception] Firestore instance created');
 
 // ── CLOCK ──
 function updateClock(){
@@ -557,7 +554,6 @@ window.showTab = function(tab){
   document.querySelectorAll('.nav-item').forEach((el,i)=>{
     el.classList.toggle('active',['live','history','menu','printers'][i]===tab);
   });
-  if(tab==='history') renderHistory();
   if(tab==='menu') loadMenuEditor();
 };
 
@@ -606,7 +602,7 @@ function renderOrderCard(id,data){
         <div class="card-total">${(data.total||0).toFixed(2)}€</div>
         <div class="card-actions">
           ${canAdv?`<button class="btn btn-advance" onclick="__advance('${id}','${data.status}')">${nextLabel(data.status)}</button>`:''}
-          ${!isCancelled?`<button class="btn btn-print" onclick="__printBoth('${id}',${JSON.stringify(data).replace(/'/g,"\\'")})">🖨</button>`:''}
+          ${!isCancelled?`<button class="btn btn-print" onclick="__printFromStore('${id}')">🖨</button>`:''}
           ${!isCancelled?`<button class="btn btn-cancel" onclick="__cancel('${id}')">✕</button>`:''}
         </div>
       </div>
@@ -640,7 +636,6 @@ function renderOrders(){
   entries.sort((a,b)=>(order[a[1].status]??5)-(order[b[1].status]??5)||(a[1].createdAt?.toMillis()||0)-(b[1].createdAt?.toMillis()||0));
   const grid=document.getElementById('orders-grid');
   grid.innerHTML=entries.length?entries.map(([id,d])=>renderOrderCard(id,d)).join(''):'<div class="loading-line">Aucune commande active</div>';
-  console.log('[Reception] renderOrders: showing', entries.length, 'orders (filter:', filterStatus, ')');
 }
 
 function renderHistory(){
@@ -648,7 +643,6 @@ function renderHistory(){
   const today=new Date().toDateString();
   const hist=Object.entries(allOrders).filter(([,d])=>d.createdAt&&new Date(d.createdAt.toMillis()).toDateString()===today)
     .sort((a,b)=>(b[1].createdAt?.toMillis()||0)-(a[1].createdAt?.toMillis()||0));
-  console.log('[Reception] renderHistory: showing', hist.length, 'orders for today');
   tbody.innerHTML=hist.map(([id,d])=>`
     <tr>
       <td><strong>Table ${d.table}</strong></td>
@@ -657,7 +651,7 @@ function renderHistory(){
       <td>${(d.items||[]).map(i=>`x${i.qty} ${i.name}`).join(', ')}</td>
       <td><strong>${(d.total||0).toFixed(2)}€</strong></td>
       <td><span class="status-badge ${d.status}">${d.status.toUpperCase()}</span></td>
-    </tr>`).join('') || '<tr><td colspan="6" class="loading-line">Aucun historique aujourd\'hui</td></tr>';
+    </tr>`).join('') || '<tr><td colspan="6" class="loading-line">Aucun historique aujourd'hui</td></tr>';
 }
 
 setInterval(()=>{
@@ -688,6 +682,11 @@ window.__cancel = async function(id){
 };
 window.__printFromStore = function(id){
   const data = allOrders[id];
+  if(!data) return showNotif('⚠️ Commande introuvable');
+  window.__printBoth(id, {...data, id});
+};
+window.__printFromStore = function(id){
+  const data = allOrders[id];
   if(!data) return showNotif('Commande introuvable');
   window.__printBoth(id, {...data, id});
 };
@@ -697,7 +696,6 @@ function showNotif(msg){
   n.textContent=msg; n.classList.add('show');
   setTimeout(()=>n.classList.remove('show'),3500);
 }
-window.showNotif = showNotif;
 function showNewOrder(table){
   const a=document.getElementById('new-order-alert');
   document.getElementById('new-order-txt').textContent='Table '+table+' — Nouvelle commande!';
@@ -707,38 +705,28 @@ function showNewOrder(table){
 
 // WAITER CALLS
 let waiterCallId = null;
-console.log('[Reception] Setting up waiter_calls onSnapshot listener...');
-onSnapshot(
-  query(collection(db,'waiter_calls'),where('answered','==',false)),
-  snap=>{
-    console.log('[Reception] waiter_calls snapshot received, size:', snap.size);
-    snap.docChanges().forEach(ch=>{
-      if(ch.type==='added'){
-        const d=ch.doc.data();
-        waiterCallId=ch.doc.id;
-        console.log('[Reception] Waiter call from table:', d.table);
-        document.getElementById('waiter-notif-title').textContent='TABLE '+d.table+' — APPEL SERVEUR';
-        document.getElementById('waiter-notif-msg').textContent='Un client à la table '+d.table+' demande assistance.';
-        document.getElementById('waiter-notif').classList.add('show');
-        // Play audio bell
-        try{
-          const ctx=new AudioContext();
-          const o=ctx.createOscillator(); const g=ctx.createGain();
-          o.connect(g); g.connect(ctx.destination);
-          o.frequency.setValueAtTime(880,ctx.currentTime);
-          o.frequency.exponentialRampToValueAtTime(440,ctx.currentTime+0.3);
-          g.gain.setValueAtTime(0.5,ctx.currentTime);
-          g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.8);
-          o.start(); o.stop(ctx.currentTime+0.8);
-        }catch(e){}
-      }
-    });
-  },
-  error=>{
-    console.error('[Reception] waiter_calls onSnapshot ERROR:', error.code, error.message);
-    showNotif('❌ Erreur listener appels: '+error.message);
-  }
-);
+onSnapshot(query(collection(db,'waiter_calls'),where('answered','==',false)), snap=>{
+  snap.docChanges().forEach(ch=>{
+    if(ch.type==='added'){
+      const d=ch.doc.data();
+      waiterCallId=ch.doc.id;
+      document.getElementById('waiter-notif-title').textContent='TABLE '+d.table+' — APPEL SERVEUR';
+      document.getElementById('waiter-notif-msg').textContent='Un client à la table '+d.table+' demande assistance.';
+      document.getElementById('waiter-notif').classList.add('show');
+      // Play audio bell
+      try{
+        const ctx=new AudioContext();
+        const o=ctx.createOscillator(); const g=ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.frequency.setValueAtTime(880,ctx.currentTime);
+        o.frequency.exponentialRampToValueAtTime(440,ctx.currentTime+0.3);
+        g.gain.setValueAtTime(0.5,ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.8);
+        o.start(); o.stop(ctx.currentTime+0.8);
+      }catch(e){}
+    }
+  });
+});
 
 window.dismissWaiter = async function(){
   document.getElementById('waiter-notif').classList.remove('show');
@@ -748,55 +736,23 @@ window.dismissWaiter = async function(){
   }
 };
 
-// ── TEST FIREBASE BUTTON ──
-window.testFirebase=async function(){
-  try{
-    console.log('[Reception] 🧪 Test Firebase: writing test order to orders collection...');
-    const ref=await addDoc(collection(db,'orders'),{table:'TEST',items:[],total:0,note:'Test order from reception',status:'preparing',createdAt:serverTimestamp()});
-    console.log('[Reception] 🧪 Test order written successfully! ID:', ref.id);
-    showNotif('✅ Test order sent! ID: '+ref.id.slice(0,6));
-  }catch(e){
-    console.error('[Reception] 🧪 Test FAILED:', e.code, e.message);
-    console.error('[Reception] 🧪 Full error:', e);
-    showNotif('❌ Test failed: '+e.message);
-  }
-};
-
 // ORDERS SNAPSHOT
-console.log('[Reception] Initializing Firebase orders listener...');
 const q=query(collection(db,'orders'),where('status','in',['pending','preparing','ready','served','cancelled']));
-console.log('[Reception] Query created: collection=orders, where status in [pending,preparing,ready,served,cancelled]');
-
-onSnapshot(q,
-  snap=>{
-    console.log('[Reception] Orders snapshot received, size:', snap.size, 'isFirst:', isFirst);
-    snap.docChanges().forEach(ch=>{
-      const id=ch.doc.id, data=ch.doc.data();
-      console.log('[Reception] Order change:', ch.type, 'id:', id, 'status:', data.status, 'table:', data.table);
-      if(ch.type==='removed'){delete allOrders[id];return;}
-      allOrders[id]=data;
-      if(!isFirst&&ch.type==='added'&&(data.status==='pending'||data.status==='preparing')){
-        console.log('[Reception] 🆕 NEW ORDER detected! Table:', data.table);
-        showNewOrder(data.table);
-        autoPrint(id,{...data,id});
-      }
-    });
-    isFirst=false;
-    console.log('[Reception] Total orders in allOrders:', Object.keys(allOrders).length);
-    updateCounters();
-    renderOrders();
-    renderHistory();
-  },
-  error=>{
-    console.error('[Reception] ❌ Orders onSnapshot ERROR:', error.code, error.message);
-    console.error('[Reception] Full error:', error);
-    showNotif('❌ Erreur listener commandes: '+error.message);
-    // If permission denied, show helpful message
-    if(error.code==='permission-denied'){
-      console.error('[Reception] PERMISSION DENIED — Check Firestore security rules allow read on orders collection');
+onSnapshot(q,snap=>{
+  snap.docChanges().forEach(ch=>{
+    const id=ch.doc.id, data=ch.doc.data();
+    if(ch.type==='removed'){delete allOrders[id];return;}
+    allOrders[id]=data;
+    if(!isFirst&&ch.type==='added'&&(data.status==='pending'||data.status==='preparing')){
+      showNewOrder(data.table);
+      autoPrint(id,{...data,id});
     }
-  }
-);
+  });
+  isFirst=false;
+  updateCounters();
+  renderOrders();
+  renderHistory(allOrders);
+});
 
 // ── QZ TRAY PRINTING ──
 var _CERT = `-----BEGIN CERTIFICATE-----
@@ -1015,16 +971,13 @@ window.loadMenuEditor = async function(){
   const grid=document.getElementById('menu-grid');
   grid.innerHTML='<div class="loading-line">Chargement…</div>';
   try{
-    console.log('[Reception] Loading menu products from Firestore...');
     const snap=await getDocs(collection(db,'menu'));
     menuData={};
     snap.forEach(d=>{menuData[d.id]={...d.data(),_id:d.id};});
-    console.log('[Reception] Menu products loaded:', Object.keys(menuData).length);
     renderMenuGrid();
   }catch(e){
     grid.innerHTML='<div class="loading-line">Erreur: '+e.message+'</div>';
-    console.error('[Reception] Menu load error:',e);
-    showNotif('❌ Erreur chargement menu: '+e.message);
+    console.error('Menu load error:',e);
   }
 };
 
@@ -1131,12 +1084,7 @@ window.deleteProduct = async function(id){
 
 // Init
 loadSettings();
-console.log('[Reception] 🚀 Application initialized. Settings loaded.');
-setTimeout(async()=>{
-  console.log('[Reception] Attempting QZ Tray connection...');
-  await loadQZScript();
-  try{await connectQZ(true);}catch(e){console.warn('[Reception] QZ Tray auto-connect failed:', e.message);}
-},1500);
+setTimeout(async()=>{ await loadQZScript(); try{await connectQZ(true);}catch(e){} },1500);
 </script>
 </body>
 </html>

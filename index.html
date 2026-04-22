@@ -549,8 +549,8 @@ body{
 .cart-fab-info{display:flex;align-items:center;gap:10px;}
 .cart-fab-badge{background:var(--orange);color:white;border-radius:50%;width:24px;height:24px;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;}
 .cart-fab-total{font-size:14px;font-weight:700;color:var(--gold-light);}
-.order-confirm{position:fixed;inset:0;z-index:700;background:var(--garnet);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:32px;transform:scale(0);opacity:0;transition:all .4s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none;overflow-y:auto;}
-.order-confirm.show{transform:scale(1);opacity:1;pointer-events:all;}
+.order-confirm{position:fixed;inset:0;z-index:700;background:var(--garnet);display:flex;flex-direction:column;overflow:hidden;transform:translateY(100%);transition:transform .5s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none;}
+.order-confirm.show{transform:translateY(0);pointer-events:all;}
 .confirm-icon{font-size:4rem;animation:bounce 1s ease-in-out infinite;}
 @keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
 .confirm-title{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--gold-light);text-align:center;}
@@ -558,34 +558,6 @@ body{
 .waiter-fab{display:none;} /* hidden when cart is shown - waiter in post-order screen */
 .waiter-calling{animation:wPulse 1s ease-in-out infinite;}
 @keyframes wPulse{0%,100%{box-shadow:0 6px 30px rgba(204,85,0,0.4);}50%{box-shadow:0 6px 50px rgba(204,85,0,0.8);}}
-.confirm-hero{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:20px;}
-.confirm-sub{font-size:0.9rem;color:rgba(255,253,208,0.7);text-align:center;}
-.confirm-divider{width:50px;height:1px;background:rgba(201,168,76,0.4);margin:8px auto;}
-.confirm-timer{font-size:0.85rem;color:var(--gold-light);margin-bottom:12px;}
-.btn-close-confirm{background:none;border:1px solid rgba(201,168,76,0.3);color:rgba(255,253,208,0.6);border-radius:50px;padding:8px 20px;font-size:0.75rem;cursor:pointer;font-family:'Lato',sans-serif;letter-spacing:1px;text-transform:uppercase;transition:all .2s;}
-.btn-close-confirm:hover{color:var(--gold-light);border-color:var(--gold);}
-.review-section{background:rgba(255,253,208,0.08);border-radius:16px;padding:24px 20px;text-align:center;border:1px solid rgba(201,168,76,0.15);}
-.review-title{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--gold-light);margin-bottom:6px;}
-.review-sub{font-size:0.8rem;color:rgba(255,253,208,0.5);margin-bottom:16px;letter-spacing:1px;}
-.stars{display:flex;justify-content:center;gap:8px;margin-bottom:16px;}
-.star{font-size:2rem;color:rgba(255,253,208,0.3);cursor:pointer;transition:color .2s,transform .2s;}
-.star:hover,.star.active{color:#FFD700;transform:scale(1.15);}
-.review-textarea{width:100%;background:rgba(255,253,208,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:10px;padding:10px 14px;font-family:'Lato',sans-serif;font-size:0.85rem;color:var(--cream);outline:none;resize:none;margin-bottom:12px;}
-.review-textarea::placeholder{color:rgba(255,253,208,0.3);}
-.review-actions{display:flex;flex-direction:column;gap:10px;align-items:center;}
-.btn-submit-review{background:var(--gold);color:var(--dark);border:none;border-radius:50px;padding:12px 28px;font-family:'Lato',sans-serif;font-size:0.8rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s;width:100%;max-width:260px;}
-.btn-submit-review:hover{background:var(--gold-light);transform:translateY(-1px);}
-.btn-call-waiter{background:var(--orange);color:white;border:none;border-radius:50px;padding:14px 28px;font-family:'Lato',sans-serif;font-size:0.85rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s;width:100%;max-width:260px;box-shadow:0 4px 20px rgba(204,85,0,0.3);}
-.btn-call-waiter:hover{transform:translateY(-1px);box-shadow:0 6px 30px rgba(204,85,0,0.5);}
-.btn-call-waiter.calling{animation:callPulse 1s ease-in-out infinite;}
-@keyframes callPulse{0%,100%{box-shadow:0 4px 20px rgba(204,85,0,0.3);}50%{box-shadow:0 4px 40px rgba(204,85,0,0.7);}}
-.social-links{display:flex;gap:12px;justify-content:center;margin:16px 0;flex-wrap:wrap;}
-.social-btn{display:flex;align-items:center;gap:8px;padding:12px 20px;border-radius:50px;font-family:'Lato',sans-serif;font-size:0.78rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border:none;transition:all .2s;text-decoration:none;min-width:140px;justify-content:center;}
-.social-btn:hover{transform:translateY(-2px);}
-.social-btn.instagram{background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:white;box-shadow:0 4px 15px rgba(220,39,67,0.3);}
-.social-btn.google{background:white;color:#333;box-shadow:0 4px 15px rgba(0,0,0,0.15);}
-.social-btn.google:hover{box-shadow:0 6px 20px rgba(0,0,0,0.2);}
-.social-icon{font-size:1.1rem;}
 </style>
 </head>
 <body>
@@ -2695,46 +2667,69 @@ window.addEventListener('scroll', () => {
 </div>
 
 <div class="order-confirm" id="order-confirm">
-  <div class="confirm-hero">
-    <span class="confirm-icon">&#9989;</span>
-    <div class="confirm-title">Commande Envoy&#233;e!</div>
-    <div class="confirm-ref" id="order-ref-display">#????</div>
-    <div class="confirm-sub">Votre commande est en pr&#233;paration</div>
-    <div class="confirm-divider"></div>
-    <div class="confirm-timer" id="confirm-timer">&#8987; Heure de commande: <span id="order-time-display">--:--</span></div>
-    <button class="btn-close-confirm" onclick="document.getElementById('order-confirm').classList.remove('show')">Retour au menu</button>
+
+  <!-- TOP: Order confirmed -->
+  <div style="background:var(--garnet);padding:40px 28px 32px;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;">
+    <div style="font-size:5rem;animation:bounce 1s ease-in-out infinite;">&#9989;</div>
+    <div style="font-family:'Playfair Display',serif;font-size:1.9rem;color:var(--gold-light);font-weight:700;">Commande Envoy&#233;e!</div>
+    <div style="background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,.4);border-radius:50px;padding:8px 28px;font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--gold-light);" id="order-ref-display">#????</div>
+    <div style="font-size:12px;color:rgba(255,220,180,0.75);letter-spacing:2px;">&#8987; Commande re&#231;ue &#224; <span id="order-time-display">--:--</span></div>
+    <div style="font-size:13px;color:rgba(255,220,180,0.85);">Votre commande est en pr&#233;paration. Merci de patienter.</div>
   </div>
 
-  <!-- Social Review Links -->
-  <div class="social-links">
-    <a href="https://www.instagram.com/tajmahalrestaurant/" target="_blank" rel="noopener" class="social-btn instagram">
-      <span class="social-icon">&#128247;</span> Instagram
-    </a>
-    <a href="https://search.google.com/local/writereview?placeid=YOUR_PLACE_ID" target="_blank" rel="noopener" class="social-btn google">
-      <span class="social-icon">&#11088;</span> Google
-    </a>
+  <!-- CALL WAITER - Big prominent button -->
+  <div style="background:var(--orange);padding:20px 24px;display:flex;align-items:center;gap:14px;cursor:pointer;border-top:2px solid rgba(255,255,255,0.2);border-bottom:2px solid rgba(255,255,255,0.2);" onclick="callWaiter()" id="waiter-call-strip">
+    <div style="font-size:2rem;animation:bellAnim 1s ease-in-out infinite;">&#128276;</div>
+    <div>
+      <div style="font-size:14px;font-weight:900;color:white;letter-spacing:2px;text-transform:uppercase;">Appeler le Serveur</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.8);margin-top:2px;">Besoin d'aide? Appelez notre &#233;quipe</div>
+    </div>
+    <div style="margin-left:auto;font-size:1.5rem;color:white;">&#8250;</div>
   </div>
 
-  <!-- Call Waiter -->
-  <button class="btn-call-waiter" id="waiter-btn" onclick="callWaiter()">
-    &#128276; Appeler le Serveur
-  </button>
+  <!-- REVIEW SECTION -->
+  <div style="background:var(--cream);flex:1;overflow-y:auto;padding:24px 20px;">
+    
+    <!-- Stars -->
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--garnet);margin-bottom:6px;">Votre exp&#233;rience?</div>
+      <div style="font-size:11px;color:var(--text-muted);letter-spacing:2px;margin-bottom:16px;">Notez votre visite au Taj Mahal</div>
+      <div id="stars" style="display:flex;justify-content:center;gap:12px;margin-bottom:16px;">
+        <span onclick="rateStar(1)" style="font-size:2.8rem;cursor:pointer;filter:grayscale(1);transition:all .2s;" class="star">&#9733;</span>
+        <span onclick="rateStar(2)" style="font-size:2.8rem;cursor:pointer;filter:grayscale(1);transition:all .2s;" class="star">&#9733;</span>
+        <span onclick="rateStar(3)" style="font-size:2.8rem;cursor:pointer;filter:grayscale(1);transition:all .2s;" class="star">&#9733;</span>
+        <span onclick="rateStar(4)" style="font-size:2.8rem;cursor:pointer;filter:grayscale(1);transition:all .2s;" class="star">&#9733;</span>
+        <span onclick="rateStar(5)" style="font-size:2.8rem;cursor:pointer;filter:grayscale(1);transition:all .2s;" class="star">&#9733;</span>
+      </div>
+      <textarea id="review-text" rows="2" style="width:100%;background:white;border:1px solid rgba(201,168,76,0.25);border-radius:10px;padding:10px 14px;font-family:'Lato',sans-serif;font-size:13px;color:var(--dark);outline:none;resize:none;margin-bottom:12px;" placeholder="Un commentaire? (optionnel)"></textarea>
+      <button onclick="submitReview()" style="width:100%;background:var(--garnet);color:white;border:none;border-radius:50px;padding:12px;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;font-family:'Lato',sans-serif;margin-bottom:20px;">Envoyer mon avis</button>
+    </div>
 
-  <!-- Review Section -->
-  <div class="review-section">
-    <div class="review-title">Votre avis compte!</div>
-    <div class="review-sub">Notez votre visite</div>
-    <div class="stars" id="stars">
-      <span class="star" onclick="rateStar(1)">&#9733;</span>
-      <span class="star" onclick="rateStar(2)">&#9733;</span>
-      <span class="star" onclick="rateStar(3)">&#9733;</span>
-      <span class="star" onclick="rateStar(4)">&#9733;</span>
-      <span class="star" onclick="rateStar(5)">&#9733;</span>
+    <!-- Divider -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+      <div style="flex:1;height:1px;background:rgba(201,168,76,0.2);"></div>
+      <div style="font-size:10px;letter-spacing:3px;color:var(--text-muted);text-transform:uppercase;">Partagez votre exp&#233;rience</div>
+      <div style="flex:1;height:1px;background:rgba(201,168,76,0.2);"></div>
     </div>
-    <textarea class="review-textarea" id="review-text" rows="2" placeholder="Un commentaire? (optionnel)"></textarea>
-    <div class="review-actions">
-      <button class="btn-submit-review" onclick="submitReview()">Envoyer mon avis</button>
+
+    <!-- Google & Instagram buttons -->
+    <div style="display:flex;gap:12px;margin-bottom:20px;">
+      <a href="https://g.page/r/YOUR_GOOGLE_REVIEW_ID/review" target="_blank" rel="noopener"
+         style="flex:1;background:white;border:2px solid #4285F4;border-radius:14px;padding:14px 12px;display:flex;align-items:center;justify-content:center;gap:10px;text-decoration:none;transition:all .2s;box-shadow:0 2px 12px rgba(66,133,244,.15);">
+        <svg width="22" height="22" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        <div><div style="font-size:11px;font-weight:700;color:#4285F4;letter-spacing:1px;">Google</div><div style="font-size:10px;color:#888;">Avis</div></div>
+      </a>
+      <a href="https://www.instagram.com/YOUR_INSTAGRAM_HANDLE" target="_blank" rel="noopener"
+         style="flex:1;background:white;border:2px solid #E1306C;border-radius:14px;padding:14px 12px;display:flex;align-items:center;justify-content:center;gap:10px;text-decoration:none;transition:all .2s;box-shadow:0 2px 12px rgba(225,48,108,.15);">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect width="20" height="20" x="2" y="2" rx="5" ry="5" stroke="#E1306C" stroke-width="1.8"/><circle cx="12" cy="12" r="4.5" stroke="#E1306C" stroke-width="1.8"/><circle cx="17.5" cy="6.5" r="1.2" fill="#E1306C"/></svg>
+        <div><div style="font-size:11px;font-weight:700;color:#E1306C;letter-spacing:1px;">Instagram</div><div style="font-size:10px;color:#888;">Suivez-nous</div></div>
+      </a>
     </div>
+
+    <button onclick="document.getElementById('order-confirm').classList.remove('show')" 
+      style="width:100%;background:transparent;color:var(--text-muted);border:1px solid rgba(201,168,76,0.2);border-radius:50px;padding:12px;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;font-family:'Lato',sans-serif;">
+      &#8592; Retour au menu
+    </button>
   </div>
 </div>
 <script type="module">
@@ -2789,48 +2784,35 @@ window.placeOrder=async function(){
     document.getElementById('order-confirm').classList.add('show');
     Object.keys(cart).forEach(k=>delete cart[k]);updateCartUI();
     document.querySelectorAll('[id^="ctrl-"]').forEach(el=>{const id=el.id.replace('ctrl-','');el.innerHTML='<button class="add-btn" onclick="addItem(\''+id+'\')">Ajouter</button>';});
+    setTimeout(()=>document.getElementById('order-confirm').classList.remove('show'),5000);
     btn.disabled=false;btn.textContent='Commander maintenant';
   }catch(e){showToast('&#10060; '+e.message);btn.disabled=false;btn.textContent='Commander maintenant';}
 };
 let waiterCooldown=false;
 window.callWaiter=async function(){
   if(waiterCooldown){showToast('&#9203; Serveur d\u00e9j\u00e0 appel\u00e9');return;}
-  const btn=document.getElementById('waiter-btn');
-  if(btn)btn.classList.add('calling');
-  try{await addDoc(collection(db,'waiter_calls'),{table:tableNum,answered:false,createdAt:serverTimestamp()});showToast('&#128276; Serveur appel\u00e9 &#8212; il arrive!');waiterCooldown=true;setTimeout(()=>{if(btn)btn.classList.remove('calling');waiterCooldown=false;},30000);}
-  catch(e){if(btn)btn.classList.remove('calling');showToast('&#10060; '+e.message);}
-};
-let currentRating=0;
-window.rateStar=function(n){
-  currentRating=n;
-  document.querySelectorAll('.star').forEach((s,i)=>{s.classList.toggle('active',i<n);});
-};
-window.submitReview=async function(){
-  if(!currentRating){showToast('&#11088; Veuillez donner une note');return;}
-  try{
-    await addDoc(collection(db,'reviews'),{table:tableNum,rating:currentRating,text:document.getElementById('review-text').value.trim(),createdAt:serverTimestamp()});
-    showToast('Merci pour votre avis! &#128591;');
-    document.getElementById('review-text').value='';
-    currentRating=0;
-    document.querySelectorAll('.star').forEach(s=>s.classList.remove('active'));
-  }catch(e){showToast('&#10060; '+e.message);}
+  const fab=document.getElementById('waiter-fab');fab.classList.add('waiter-calling');
+  try{await addDoc(collection(db,'waiter_calls'),{table:tableNum,answered:false,createdAt:serverTimestamp()});showToast('&#128276; Serveur appel\u00e9 &#8212; il arrive!');waiterCooldown=true;setTimeout(()=>{fab.classList.remove('waiter-calling');waiterCooldown=false;},30000);}
+  catch(e){fab.classList.remove('waiter-calling');showToast('&#10060; '+e.message);}
 };
 function showToast(msg){let t=document.getElementById('menu-toast');if(!t){t=document.createElement('div');t.id='menu-toast';t.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--garnet);color:white;border:1px solid var(--gold);border-radius:50px;padding:10px 24px;font-size:12px;font-weight:700;z-index:800;opacity:0;transition:all .3s;white-space:nowrap;';document.body.appendChild(t);}t.innerHTML=msg;t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(-50%) translateY(20px)';},3000);}
 document.addEventListener('DOMContentLoaded',()=>{
-  // Store item data globally for reliable access
   window._itemData={};
   document.querySelectorAll('.card').forEach((card,idx)=>{
-    const nameEl=card.querySelector('.card-name');const priceEl=card.querySelector('.card-price');
+    const nameEl=card.querySelector('.card-name');
+    const priceEl=card.querySelector('.card-price');
     if(!nameEl||!priceEl)return;
     const name=nameEl.textContent.trim();
-    // Parse price - remove all non-numeric except dot
-    const priceText=priceEl.textContent.replace(/[^0-9,\.]/g,'').replace(',','.');
-    const price=parseFloat(priceText)||0;
+    // Extract only digits and dot/comma
+    const raw=priceEl.textContent.replace(/[^\d,\.]/g,'').replace(',','.');
+    const price=parseFloat(raw)||0;
     const id='item-'+idx;
     window._itemData[id]={name,price};
-    const ctrl=document.createElement('div');ctrl.className='card-add-btn';
+    const ctrl=document.createElement('div');
+    ctrl.className='card-add-btn';
     ctrl.innerHTML='<div></div><div id="ctrl-'+id+'"><button class="add-btn" onclick="addItem(\''+id+'\')">Ajouter</button></div>';
-    const body=card.querySelector('.card-body');if(body)body.appendChild(ctrl);
+    const body=card.querySelector('.card-body');
+    if(body)body.appendChild(ctrl);
   });
 });
 </script></body>
