@@ -549,7 +549,7 @@ body{
 .cart-fab-info{display:flex;align-items:center;gap:10px;}
 .cart-fab-badge{background:var(--orange);color:white;border-radius:50%;width:24px;height:24px;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;}
 .cart-fab-total{font-size:14px;font-weight:700;color:var(--gold-light);}
-.order-confirm{position:fixed;inset:0;z-index:700;background:var(--garnet);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:32px;transform:scale(0);opacity:0;transition:all .4s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none;}
+.order-confirm{position:fixed;inset:0;z-index:700;background:var(--garnet);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:32px;transform:scale(0);opacity:0;transition:all .4s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none;overflow-y:auto;}
 .order-confirm.show{transform:scale(1);opacity:1;pointer-events:all;}
 .confirm-icon{font-size:4rem;animation:bounce 1s ease-in-out infinite;}
 @keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
@@ -558,6 +558,34 @@ body{
 .waiter-fab{display:none;} /* hidden when cart is shown - waiter in post-order screen */
 .waiter-calling{animation:wPulse 1s ease-in-out infinite;}
 @keyframes wPulse{0%,100%{box-shadow:0 6px 30px rgba(204,85,0,0.4);}50%{box-shadow:0 6px 50px rgba(204,85,0,0.8);}}
+.confirm-hero{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:20px;}
+.confirm-sub{font-size:0.9rem;color:rgba(255,253,208,0.7);text-align:center;}
+.confirm-divider{width:50px;height:1px;background:rgba(201,168,76,0.4);margin:8px auto;}
+.confirm-timer{font-size:0.85rem;color:var(--gold-light);margin-bottom:12px;}
+.btn-close-confirm{background:none;border:1px solid rgba(201,168,76,0.3);color:rgba(255,253,208,0.6);border-radius:50px;padding:8px 20px;font-size:0.75rem;cursor:pointer;font-family:'Lato',sans-serif;letter-spacing:1px;text-transform:uppercase;transition:all .2s;}
+.btn-close-confirm:hover{color:var(--gold-light);border-color:var(--gold);}
+.review-section{background:rgba(255,253,208,0.08);border-radius:16px;padding:24px 20px;text-align:center;border:1px solid rgba(201,168,76,0.15);}
+.review-title{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--gold-light);margin-bottom:6px;}
+.review-sub{font-size:0.8rem;color:rgba(255,253,208,0.5);margin-bottom:16px;letter-spacing:1px;}
+.stars{display:flex;justify-content:center;gap:8px;margin-bottom:16px;}
+.star{font-size:2rem;color:rgba(255,253,208,0.3);cursor:pointer;transition:color .2s,transform .2s;}
+.star:hover,.star.active{color:#FFD700;transform:scale(1.15);}
+.review-textarea{width:100%;background:rgba(255,253,208,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:10px;padding:10px 14px;font-family:'Lato',sans-serif;font-size:0.85rem;color:var(--cream);outline:none;resize:none;margin-bottom:12px;}
+.review-textarea::placeholder{color:rgba(255,253,208,0.3);}
+.review-actions{display:flex;flex-direction:column;gap:10px;align-items:center;}
+.btn-submit-review{background:var(--gold);color:var(--dark);border:none;border-radius:50px;padding:12px 28px;font-family:'Lato',sans-serif;font-size:0.8rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s;width:100%;max-width:260px;}
+.btn-submit-review:hover{background:var(--gold-light);transform:translateY(-1px);}
+.btn-call-waiter{background:var(--orange);color:white;border:none;border-radius:50px;padding:14px 28px;font-family:'Lato',sans-serif;font-size:0.85rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s;width:100%;max-width:260px;box-shadow:0 4px 20px rgba(204,85,0,0.3);}
+.btn-call-waiter:hover{transform:translateY(-1px);box-shadow:0 6px 30px rgba(204,85,0,0.5);}
+.btn-call-waiter.calling{animation:callPulse 1s ease-in-out infinite;}
+@keyframes callPulse{0%,100%{box-shadow:0 4px 20px rgba(204,85,0,0.3);}50%{box-shadow:0 4px 40px rgba(204,85,0,0.7);}}
+.social-links{display:flex;gap:12px;justify-content:center;margin:16px 0;flex-wrap:wrap;}
+.social-btn{display:flex;align-items:center;gap:8px;padding:12px 20px;border-radius:50px;font-family:'Lato',sans-serif;font-size:0.78rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border:none;transition:all .2s;text-decoration:none;min-width:140px;justify-content:center;}
+.social-btn:hover{transform:translateY(-2px);}
+.social-btn.instagram{background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);color:white;box-shadow:0 4px 15px rgba(220,39,67,0.3);}
+.social-btn.google{background:white;color:#333;box-shadow:0 4px 15px rgba(0,0,0,0.15);}
+.social-btn.google:hover{box-shadow:0 6px 20px rgba(0,0,0,0.2);}
+.social-icon{font-size:1.1rem;}
 </style>
 </head>
 <body>
@@ -2676,8 +2704,25 @@ window.addEventListener('scroll', () => {
     <div class="confirm-timer" id="confirm-timer">&#8987; Heure de commande: <span id="order-time-display">--:--</span></div>
     <button class="btn-close-confirm" onclick="document.getElementById('order-confirm').classList.remove('show')">Retour au menu</button>
   </div>
+
+  <!-- Social Review Links -->
+  <div class="social-links">
+    <a href="https://www.instagram.com/tajmahalrestaurant/" target="_blank" rel="noopener" class="social-btn instagram">
+      <span class="social-icon">&#128247;</span> Instagram
+    </a>
+    <a href="https://search.google.com/local/writereview?placeid=YOUR_PLACE_ID" target="_blank" rel="noopener" class="social-btn google">
+      <span class="social-icon">&#11088;</span> Google
+    </a>
+  </div>
+
+  <!-- Call Waiter -->
+  <button class="btn-call-waiter" id="waiter-btn" onclick="callWaiter()">
+    &#128276; Appeler le Serveur
+  </button>
+
+  <!-- Review Section -->
   <div class="review-section">
-    <div class="review-title">Votre exp&#233;rience?</div>
+    <div class="review-title">Votre avis compte!</div>
     <div class="review-sub">Notez votre visite</div>
     <div class="stars" id="stars">
       <span class="star" onclick="rateStar(1)">&#9733;</span>
@@ -2688,9 +2733,6 @@ window.addEventListener('scroll', () => {
     </div>
     <textarea class="review-textarea" id="review-text" rows="2" placeholder="Un commentaire? (optionnel)"></textarea>
     <div class="review-actions">
-      <button class="btn-call-waiter" id="waiter-btn" onclick="callWaiter()">
-        &#128276; Appeler le Serveur
-      </button>
       <button class="btn-submit-review" onclick="submitReview()">Envoyer mon avis</button>
     </div>
   </div>
@@ -2747,16 +2789,31 @@ window.placeOrder=async function(){
     document.getElementById('order-confirm').classList.add('show');
     Object.keys(cart).forEach(k=>delete cart[k]);updateCartUI();
     document.querySelectorAll('[id^="ctrl-"]').forEach(el=>{const id=el.id.replace('ctrl-','');el.innerHTML='<button class="add-btn" onclick="addItem(\''+id+'\')">Ajouter</button>';});
-    setTimeout(()=>document.getElementById('order-confirm').classList.remove('show'),5000);
     btn.disabled=false;btn.textContent='Commander maintenant';
   }catch(e){showToast('&#10060; '+e.message);btn.disabled=false;btn.textContent='Commander maintenant';}
 };
 let waiterCooldown=false;
 window.callWaiter=async function(){
   if(waiterCooldown){showToast('&#9203; Serveur d\u00e9j\u00e0 appel\u00e9');return;}
-  const fab=document.getElementById('waiter-fab');fab.classList.add('waiter-calling');
-  try{await addDoc(collection(db,'waiter_calls'),{table:tableNum,answered:false,createdAt:serverTimestamp()});showToast('&#128276; Serveur appel\u00e9 &#8212; il arrive!');waiterCooldown=true;setTimeout(()=>{fab.classList.remove('waiter-calling');waiterCooldown=false;},30000);}
-  catch(e){fab.classList.remove('waiter-calling');showToast('&#10060; '+e.message);}
+  const btn=document.getElementById('waiter-btn');
+  if(btn)btn.classList.add('calling');
+  try{await addDoc(collection(db,'waiter_calls'),{table:tableNum,answered:false,createdAt:serverTimestamp()});showToast('&#128276; Serveur appel\u00e9 &#8212; il arrive!');waiterCooldown=true;setTimeout(()=>{if(btn)btn.classList.remove('calling');waiterCooldown=false;},30000);}
+  catch(e){if(btn)btn.classList.remove('calling');showToast('&#10060; '+e.message);}
+};
+let currentRating=0;
+window.rateStar=function(n){
+  currentRating=n;
+  document.querySelectorAll('.star').forEach((s,i)=>{s.classList.toggle('active',i<n);});
+};
+window.submitReview=async function(){
+  if(!currentRating){showToast('&#11088; Veuillez donner une note');return;}
+  try{
+    await addDoc(collection(db,'reviews'),{table:tableNum,rating:currentRating,text:document.getElementById('review-text').value.trim(),createdAt:serverTimestamp()});
+    showToast('Merci pour votre avis! &#128591;');
+    document.getElementById('review-text').value='';
+    currentRating=0;
+    document.querySelectorAll('.star').forEach(s=>s.classList.remove('active'));
+  }catch(e){showToast('&#10060; '+e.message);}
 };
 function showToast(msg){let t=document.getElementById('menu-toast');if(!t){t=document.createElement('div');t.id='menu-toast';t.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--garnet);color:white;border:1px solid var(--gold);border-radius:50px;padding:10px 24px;font-size:12px;font-weight:700;z-index:800;opacity:0;transition:all .3s;white-space:nowrap;';document.body.appendChild(t);}t.innerHTML=msg;t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(-50%) translateY(20px)';},3000);}
 document.addEventListener('DOMContentLoaded',()=>{
