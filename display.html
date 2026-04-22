@@ -122,21 +122,34 @@ header{
 .toast-text span{font-size:0.75rem;opacity:0.8;letter-spacing:1px;}
 
 /* ─── COLUMNS ─── */
-.columns-wrapper{
+.orders-wrapper{
   position:relative;z-index:5;
-  display:grid;grid-template-columns:1fr 1fr;
   height:calc(100vh - 90px);
-}
-.column{
-  padding:24px 20px;
   overflow-y:auto;
-  display:flex;flex-direction:column;gap:14px;
-  scrollbar-width:thin;scrollbar-color:var(--gold-dim) transparent;
+  padding:20px 30px;
+  scrollbar-width:none;
 }
-.column::-webkit-scrollbar{width:3px;}
-.column::-webkit-scrollbar-thumb{background:var(--gold-dim);border-radius:2px;}
-.col-prep{border-right:2px solid var(--border);}
-.col-redy{background:rgba(34,139,34,0.02);}
+.orders-wrapper::-webkit-scrollbar{display:none;}
+.section-header{
+  display:flex;align-items:center;gap:14px;
+  padding:14px 24px;border-radius:14px;
+  margin-bottom:16px;margin-top:8px;
+}
+.section-kitchen{background:rgba(204,85,0,0.08);border:2px solid rgba(204,85,0,0.2);}
+.section-ready{background:rgba(22,101,52,0.06);border:2px solid rgba(22,101,52,0.2);}
+.section-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;}
+.section-kitchen .section-dot{background:var(--orange);box-shadow:0 0 14px var(--orange);}
+.section-ready .section-dot{background:#166534;box-shadow:0 0 14px #166534;}
+.section-name{font-size:13px;font-weight:900;letter-spacing:4px;text-transform:uppercase;}
+.section-kitchen .section-name{color:var(--orange);}
+.section-ready .section-name{color:#166534;}
+.section-cnt{margin-left:auto;font-size:12px;color:#888;letter-spacing:2px;}
+.cards-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  gap:16px;
+  margin-bottom:24px;
+}
 
 .col-header{
   display:flex;align-items:center;justify-content:space-between;
@@ -180,11 +193,7 @@ header{
 @keyframes goldGlow{0%{box-shadow:0 0 0 3px rgba(201,168,76,0.8);}100%{box-shadow:0 2px 16px var(--shadow);}}
 
 .card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
-.table-badge{
-  font-family:'Playfair Display',serif;
-  font-size:1.4rem;font-weight:700;
-  color:var(--garnet);
-}
+.table-badge{font-family:'Playfair Display',serif;font-size:2rem;font-weight:900;color:var(--garnet);}
 .table-ref{font-size:9px;letter-spacing:2px;color:var(--text-muted);margin-top:2px;}
 .order-time-wrap{text-align:right;}
 .order-time{font-size:11px;color:var(--text-muted);}
@@ -308,27 +317,8 @@ header{
   </div>
 </header>
 
-<div class="columns-wrapper">
-  <div class="column col-prep" id="col-prep">
-    <div class="col-header">
-      <div class="col-title">
-        <div class="col-dot"></div>
-        <span class="col-name">En Préparation</span>
-      </div>
-      <span class="col-count" id="prep-count">0 commande(s)</span>
-    </div>
-    <div id="prep-cards"></div>
-  </div>
-  <div class="column col-redy" id="col-redy">
-    <div class="col-header">
-      <div class="col-title">
-        <div class="col-dot"></div>
-        <span class="col-name">Prêt à Servir</span>
-      </div>
-      <span class="col-count" id="redy-count">0 commande(s)</span>
-    </div>
-    <div id="redy-cards"></div>
-  </div>
+<div class="orders-wrapper" id="orders-wrapper">
+  <div class="loading-msg" style="text-align:center;padding:60px;color:#aaa;font-size:12px;letter-spacing:3px;text-transform:uppercase;">Connexion en cours…</div>
 </div>
 
 <script type="module">
@@ -418,21 +408,23 @@ function buildCard(id, data){
 }
 
 function render(){
-  const prepOrders = Object.entries(orders).filter(([,d])=>d.status==='preparing').sort((a,b)=>(a[1].createdAt?.toMillis()||0)-(b[1].createdAt?.toMillis()||0));
-  const readyOrders = Object.entries(orders).filter(([,d])=>d.status==='ready').sort((a,b)=>(a[1].createdAt?.toMillis()||0)-(b[1].createdAt?.toMillis()||0));
+  const kitchen=Object.entries(orders).filter(([,d])=>d.status==='preparing').sort((a,b)=>(a[1].createdAt?.toMillis()||0)-(b[1].createdAt?.toMillis()||0));
+  const ready=Object.entries(orders).filter(([,d])=>d.status==='ready').sort((a,b)=>(a[1].createdAt?.toMillis()||0)-(b[1].createdAt?.toMillis()||0));
 
-  document.getElementById('cnt-prep').textContent = prepOrders.length;
-  document.getElementById('cnt-redy').textContent = readyOrders.length;
-  document.getElementById('prep-count').textContent = prepOrders.length+' commande(s)';
-  document.getElementById('redy-count').textContent = readyOrders.length+' commande(s)';
+  document.getElementById('cnt-prep').textContent=kitchen.length;
+  document.getElementById('cnt-redy').textContent=ready.length;
 
-  const prepEl = document.getElementById('prep-cards');
-  const redyEl = document.getElementById('redy-cards');
-
-  prepEl.innerHTML = prepOrders.length ? prepOrders.map(([id,d])=>buildCard(id,d)).join('') :
-    '<div class="empty-col"><span>👨‍🍳</span><p>Aucune commande</p></div>';
-  redyEl.innerHTML = readyOrders.length ? readyOrders.map(([id,d])=>buildCard(id,d)).join('') :
-    '<div class="empty-col"><span>✅</span><p>Aucune commande prête</p></div>';
+  let html='';
+  if(kitchen.length){
+    html+=`<div class="section-header section-kitchen"><div class="section-dot"></div><div class="section-name">En Préparation</div><div class="section-cnt">${kitchen.length} commande(s)</div></div>`;
+    html+=`<div class="cards-grid">${kitchen.map(([id,d])=>buildCard(id,d)).join('')}</div>`;
+  }
+  if(ready.length){
+    html+=`<div class="section-header section-ready"><div class="section-dot"></div><div class="section-name">Prêt à Servir ✓</div><div class="section-cnt">${ready.length} commande(s)</div></div>`;
+    html+=`<div class="cards-grid">${ready.map(([id,d])=>buildCard(id,d)).join('')}</div>`;
+  }
+  if(!kitchen.length&&!ready.length) html='<div style="text-align:center;padding:60px;color:#aaa;font-size:13px;letter-spacing:3px;text-transform:uppercase;">Aucune commande active</div>';
+  document.getElementById('orders-wrapper').innerHTML=html;
 }
 
 // Update timers every 30 seconds
