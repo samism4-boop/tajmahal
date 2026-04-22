@@ -2702,6 +2702,11 @@ const fb={apiKey:"AIzaSyDTgv9mpcXTOK5m2nCXgLunCT27tZ0Gj-I",authDomain:"tajmahal-
 const app=initializeApp(fb); const db=getFirestore(app);
 const tableNum=new URLSearchParams(window.location.search).get('table')||'?';
 const cart={};
+window.addItem=function(id){
+  const d=window._itemData&&window._itemData[id];
+  if(!d){console.warn('Item not found:',id);return;}
+  addToCart(d.name,d.price,id);
+};
 window.addToCart=function(name,price,id){if(cart[id])cart[id].qty++;else cart[id]={name,price,qty:1,id};updateCartUI();updateCardUI(id);};
 window.removeFromCart=function(id){if(cart[id]){cart[id].qty--;if(cart[id].qty<=0)delete cart[id];}updateCartUI();updateCardUI(id);};
 window.removeItemFully=function(id){delete cart[id];updateCartUI();updateCardUI(id);};
@@ -2741,7 +2746,7 @@ window.placeOrder=async function(){
     document.getElementById('cart-overlay').classList.remove('open');
     document.getElementById('order-confirm').classList.add('show');
     Object.keys(cart).forEach(k=>delete cart[k]);updateCartUI();
-    document.querySelectorAll('[id^="ctrl-"]').forEach(el=>{const id=el.id.replace('ctrl-','');el.innerHTML='<button class="add-btn" onclick="addToCart(\'\',0,\''+id+'\')">Ajouter</button>';});
+    document.querySelectorAll('[id^="ctrl-"]').forEach(el=>{const id=el.id.replace('ctrl-','');el.innerHTML='<button class="add-btn" onclick="addItem(\''+id+'\')">Ajouter</button>';});
     setTimeout(()=>document.getElementById('order-confirm').classList.remove('show'),5000);
     btn.disabled=false;btn.textContent='Commander maintenant';
   }catch(e){showToast('&#10060; '+e.message);btn.disabled=false;btn.textContent='Commander maintenant';}
@@ -2755,12 +2760,19 @@ window.callWaiter=async function(){
 };
 function showToast(msg){let t=document.getElementById('menu-toast');if(!t){t=document.createElement('div');t.id='menu-toast';t.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--garnet);color:white;border:1px solid var(--gold);border-radius:50px;padding:10px 24px;font-size:12px;font-weight:700;z-index:800;opacity:0;transition:all .3s;white-space:nowrap;';document.body.appendChild(t);}t.innerHTML=msg;t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(-50%) translateY(20px)';},3000);}
 document.addEventListener('DOMContentLoaded',()=>{
+  // Store item data globally for reliable access
+  window._itemData={};
   document.querySelectorAll('.card').forEach((card,idx)=>{
     const nameEl=card.querySelector('.card-name');const priceEl=card.querySelector('.card-price');
     if(!nameEl||!priceEl)return;
-    const name=nameEl.textContent.trim();const priceText=priceEl.textContent.replace(/[^0-9.]/g,'');const price=parseFloat(priceText)||0;
-    const id='item-'+idx;const ctrl=document.createElement('div');ctrl.className='card-add-btn';
-    ctrl.innerHTML='<div></div><div id="ctrl-'+id+'"><button class="add-btn" onclick="addToCart(\''+name.replace(/'/g,"\\'")+'\','+price+',\''+id+'\')">Ajouter</button></div>';
+    const name=nameEl.textContent.trim();
+    // Parse price - remove all non-numeric except dot
+    const priceText=priceEl.textContent.replace(/[^0-9,\.]/g,'').replace(',','.');
+    const price=parseFloat(priceText)||0;
+    const id='item-'+idx;
+    window._itemData[id]={name,price};
+    const ctrl=document.createElement('div');ctrl.className='card-add-btn';
+    ctrl.innerHTML='<div></div><div id="ctrl-'+id+'"><button class="add-btn" onclick="addItem(\''+id+'\')">Ajouter</button></div>';
     const body=card.querySelector('.card-body');if(body)body.appendChild(ctrl);
   });
 });

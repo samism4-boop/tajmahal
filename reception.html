@@ -680,6 +680,11 @@ window.__cancel = async function(id){
   if(!confirm('Annuler cette commande?')) return;
   await updateDoc(doc(db,'orders',id),{status:'cancelled'});
 };
+window.__printFromStore = function(id){
+  const data = allOrders[id];
+  if(!data) return showNotif('Commande introuvable');
+  window.__printBoth(id, {...data, id});
+};
 
 function showNotif(msg){
   const n=document.getElementById('notif');
@@ -726,13 +731,12 @@ window.dismissWaiter = async function(){
   }
 };
 
-// ORDERS SNAPSHOT — listen to all orders, filter in JS (avoids Firestore index requirements)
-onSnapshot(collection(db,'orders'),snap=>{
+// ORDERS SNAPSHOT
+const q=query(collection(db,'orders'),where('status','in',['pending','preparing','ready','served','cancelled']));
+onSnapshot(q,snap=>{
   snap.docChanges().forEach(ch=>{
     const id=ch.doc.id, data=ch.doc.data();
     if(ch.type==='removed'){delete allOrders[id];return;}
-    const validStatuses=['pending','preparing','ready','served','cancelled'];
-    if(!validStatuses.includes(data.status)){return;}
     allOrders[id]=data;
     if(!isFirst&&ch.type==='added'&&(data.status==='pending'||data.status==='preparing')){
       showNewOrder(data.table);
@@ -742,7 +746,7 @@ onSnapshot(collection(db,'orders'),snap=>{
   isFirst=false;
   updateCounters();
   renderOrders();
-  renderHistory();
+  renderHistory(allOrders);
 });
 
 // ── QZ TRAY PRINTING ──
@@ -961,10 +965,15 @@ let menuData={};
 window.loadMenuEditor = async function(){
   const grid=document.getElementById('menu-grid');
   grid.innerHTML='<div class="loading-line">Chargement…</div>';
-  const snap=await getDocs(collection(db,'menu'));
-  menuData={};
-  snap.forEach(d=>{menuData[d.id]=d.data();});
-  renderMenuGrid();
+  try{
+    const snap=await getDocs(collection(db,'menu'));
+    menuData={};
+    snap.forEach(d=>{menuData[d.id]={...d.data(),_id:d.id};});
+    renderMenuGrid();
+  }catch(e){
+    grid.innerHTML='<div class="loading-line">Erreur: '+e.message+'</div>';
+    console.error('Menu load error:',e);
+  }
 };
 
 function renderMenuGrid(){
