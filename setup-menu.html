@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taj Mahal — Setup Menu</title>
+<style>
+body{font-family:'Lato',sans-serif;background:#FFFDD0;color:#1a0a05;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.setup-box{background:white;border-radius:20px;padding:40px;max-width:600px;width:100%;box-shadow:0 8px 40px rgba(155,17,30,0.15);border:1px solid rgba(201,168,76,0.2);text-align:center}
+h1{font-family:'Playfair Display',serif;color:#9B111E;margin-bottom:8px;font-size:1.6rem}
+p{color:#8B5A3C;font-size:0.9rem;margin-bottom:24px;line-height:1.6}
+.btn{background:#9B111E;color:white;border:none;border-radius:50px;padding:16px 40px;font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s;font-family:'Lato',sans-serif;box-shadow:0 6px 20px rgba(155,17,30,0.3)}
+.btn:hover{background:#C41E3A;transform:translateY(-2px)}
+.btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+#log{margin-top:20px;text-align:left;background:#FFFDD0;border-radius:10px;padding:16px;max-height:300px;overflow-y:auto;font-size:12px;line-height:1.8;color:#3D1507}
+.log-ok{color:#228B22}
+.log-err{color:#EF4444}
+.log-info{color:#CC5500}
+.done{font-size:1.2rem;color:#228B22;font-weight:700;margin-top:16px}
+</style>
+</head>
+<body>
+<div class="setup-box">
+  <h1>Taj Mahal — Menu Setup</h1>
+  <p>This will upload <strong>161 menu items</strong> to your Firebase Firestore.<br>Click the button below to start. Only click once!</p>
+  <button class="btn" id="startBtn" onclick="uploadMenu()">Upload Menu to Firebase</button>
+  <div id="log"></div>
+  <div id="done" class="done" style="display:none">All items uploaded! You can close this page.</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDTgv9mpcXTOK5m2nCXgLunCT27tZ0Gj-I",
+  authDomain: "tajmahal-orders.firebaseapp.com",
+  projectId: "tajmahal-orders",
+  storageBucket: "tajmahal-orders.firebasestorage.app",
+  messagingSenderId: "347604539540",
+  appId: "1:347604539540:web:78fc0e40fa8fee5bca63c8"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const MENU_DATA = [
+  {
+    "name": "Cheese Naan Kebab",
+    "price": 15.0,
+    "description": "",
+    "category": "Nouveautés",
+    "badge": "new",
+    "image": ""
+  },
+  {
+    "name": "Cheese Naan Tikka",
+    "price": 15.0,
+    "description": "",
+    "category": "Nouveautés",
+    "badge": "new",
+    "image": ""
+  },
+  {
+    "name": "Brochette Tikka",
+    "price": 12.0,
+    "description": "",
+    "category": "Nouveautés",
+    "badge": "new",
+    "image": ""
+  },
+  {
+    "name": "Brochette Sheekh Kebab",
+    "price": 12.0,
+    "description": "",
+    "category": "Nouveautés",
+    "badge": "new",
+    "image": ""
+  },
+  {
+    "name": "Brochette d’Agneau",
+    "price": 13.0,
+    "description": "",
+    "category": "Nouveautés",
+    "badge": "new",
+    "image": ""
+  },
+  {
+    "name": "Mix Pakora",
+    "price": 9.0,
+    "description": "",
+    "category": "Entrées & Spécialités Tandoor",
+    "badge": "chef",
+    "image": ""
+  },
+  {
+    "name": "Mixte Grill",
+    "price": 24.0,
+    "description": "",
+    "category": "Entrées & Spécialités Tandoor",
+    "badge": "chef",
+    "image": ""
+  },
+  {
+    "name": "Baingan Pakora",
+    "price": 7.0,
+    "description": "",
+    "category": "Entrées & Spécialités Tandoor",
+    "badge": "chef",
+    "image": ""
+  },
+  {
+    "name": "Oignon Bhaja",
+    "price": 7.0,
+    "description": "",
+    "category": "Entrées & Spécialités Tandoor",
+    "badge": "chef",
+    "image": ""
+  },
+  {
+    "name": "Aloo Pakora",
+    "price": 7.0,
+    "description": "",
+    "category": "Entrées & Spécialités Tandoor",
+    "badge": "chef",
+    "image": ""
+  },
+  {
+    "name": "Fish Pakora",
+    "price": 8.0,
+    "description": "",
+    "category": "Entrées & Spécialités Tandoor",
+    "badge": "chef",
+    "image": ""
+  },
+  {
+    "name": "Raita",
+    "price": 6.5,
+    "description": "",
+    "category": "Entrées & Spécialités Tandoor",
+    "badge": "chef",
+    "image": ""
+  },
+  {
+    "name": "Raita Crevettes",
+    "price": 8.0,
+    "description": "",
+    "category": "Entrées & Spécialités Tandoor",
+    "badge": "chef",
+    "image": ""
+  },
+  {
+    "name": "Gambas Tandoori",
+    "price": 17.0,
+    "description": "",
+    "category": "Entrées & Spécialités Tandoor",
+    "badge": "chef",
+    "image": ""
+  },
+  {
+    "name": "Poulet Tikka",
+    "price": 9.0,
+    "description": "",
+    "category": "Entrées & Spécialités Tandoor",
+    "badge": "chef",
+    "image": ""
+  },
+  {
+    "name": "Agneau Tikka",
+    "price": 9.5,
+    "description": "",
+    "category": "Entrées & Spécialités Tandoor",
+    "badge": "chef",
+    "image": ""
+  },
+  {
+    "name": "Sheekh Kebab",
+    "price": 6.5,
+    "description": "",
+    "category": "Entrées & Spécialités Tandoor",
+    "badge": "chef",
+    "image": ""
+  },
+  {
+    "name": "Poulet Tandoori",
+    "price": 7.5,
+    "description": "",
+    "category": "Entrées & Spécialités Tandoor",
+    "badge": "chef",
+    "image": ""
+  },
+  {
+    "name": "Assiette Grill",
+    "price": 12.0,
+    "description": "",
+    "category": "Entrées & Spécialités Tandoor",
+    "badge": "chef",
+    "image": ""
+  },
+  {
+    "name": "Samosas Viande Hachée",
+    "price": 7.0,
+    "description": "",
+    "category": "Entrées & Spécialités Tandoor",
+    "badge": "chef",
+    "image": ""
+  },
+  {
+    "name": "Mixt Poulet Tikka",
+    "price": 9.0,
+    "description": "Assortiment de blancs de poulet marinés, grillés au Tandoor",
+    "category": "Entrées & Spécialités Tandoor",
+    "badge": "chef",
+    "image": ""
+  },
+  {
+    "name": "Reshmi Tikka",
+    "price": 8.9,
+    "description": "Poulet mariné crème, cajou, coriandre, piment vert — Tandoor",
+    "category": "Entrées & Spécialités Tandoor",
+    "badge": "chef",
+    "image": ""
+  },
+  {
+    "name": "Sheesh Kebab",
+    "price": 6.0,
+    "description": "Agneau haché en brochettes, coriandre, oignons, gingembre",
+    "category": "Entrées & Spécialités Tandoor",
+    "badge": "chef",
+    "image": ""
+  },
+  {
+    "name": "Poulet Pakora",
+    "price": 8.9,
+    "description": "Beignet de poulet mariné",
+    "category": "Entrées & Spécialités Tandoor",
+    "badge": "chef",
+    "image": ""
+  },
+  {
+    "name": "Prawn Pakora",
+    "price": 8.9,
+    "description": "Beignet de crevettes marinées",
+    "category": "Entrées & Spécialités Tandoor",
+    "badge": "chef",
+    "image": ""
+  },
+  {
+    "name": "Mixt Grill (1 pers.)",
+    "price": 13.0,
+    "description": "Assortiment de poulet, brochette de viande hachée et pilon",
+    "category": "Entrées & Spécialités Tandoor",
+    "badge": "chef",
+    "image": ""
+  },
+  {
+    "name": "Mixt Grill (2 pers.)",
+    "price": 24.0,
+    "description": "Assortiment de grillades et de beignets pour deux",
+    "category": "Entrées & Spécialités Tandoor",
+    "badge": "chef",
+    "image": ""
+  },
+  {
+    "name": "Samossa Légumes",
+    "price": 6.0,
+    "description": "Samossas aux légumes frits, croustillants",
+    "category": "Entrées & Spécialités Tandoor",
+    "badge": "chef",
+    "image": ""
+  },
+  {
+    "name": "Samossa Viande",
+    "price": 7.0,
+    "description": "Samossas à la viande hachée",
+    "category": "Entrées & Spécialités Tandoor",
+    "badge": "chef",
+    "image": ""
+  },
+  {
+    "name": "Agneau Taj",
+    "price": 18.5,
+    "description": "",
+    "category": "Plats à l'Agneau",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Agneau Shahi Korma",
+    "price": 18.0,
+    "description": "",
+    "category": "Plats à l'Agneau",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Agneau Rogan Gosht",
+    "price": 18.5,
+    "description": "",
+    "category": "Plats à l'Agneau",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Agneau Madras",
+    "price": 17.5,
+    "description": "",
+    "category": "Plats à l'Agneau",
+    "badge": "spicy",
+    "image": ""
+  },
+  {
+    "name": "Agneau Dopiaza",
+    "price": 17.5,
+    "description": "",
+    "category": "Plats à l'Agneau",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Agneau Dal Gosht",
+    "price": 18.0,
+    "description": "",
+    "category": "Plats à l'Agneau",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Agneau Palak",
+    "price": 18.0,
+    "description": "",
+    "category": "Plats à l'Agneau",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Agneau Vindaloo",
+    "price": 18.0,
+    "description": "",
+    "category": "Plats à l'Agneau",
+    "badge": "spicy",
+    "image": ""
+  },
+  {
+    "name": "Agneau Aloo Gosht",
+    "price": 18.0,
+    "description": "",
+    "category": "Plats à l'Agneau",
+    "badge": "spicy",
+    "image": ""
+  },
+  {
+    "name": "Agneau Masala",
+    "price": 18.0,
+    "description": "",
+    "category": "Plats à l'Agneau",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Agneau Jalfrezi",
+    "price": 18.5,
+    "description": "",
+    "category": "Plats à l'Agneau",
+    "badge": "spicy",
+    "image": ""
+  },
+  {
+    "name": "Agneau Jall Frezi",
+    "price": 17.0,
+    "description": "Agneau grillé puis mariné au curry avec des aromates frais",
+    "category": "Plats à l'Agneau",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Poulet Masala",
+    "price": 16.5,
+    "description": "",
+    "category": "Plats au Poulet",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Poulet Dopiaza",
+    "price": 16.5,
+    "description": "",
+    "category": "Plats au Poulet",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Poulet Madras",
+    "price": 16.5,
+    "description": "",
+    "category": "Plats au Poulet",
+    "badge": "spicy",
+    "image": ""
+  },
+  {
+    "name": "Poulet Vindaloo",
+    "price": 16.5,
+    "description": "",
+    "category": "Plats au Poulet",
+    "badge": "spicy",
+    "image": ""
+  },
+  {
+    "name": "Poulet Mughlai",
+    "price": 17.0,
+    "description": "",
+    "category": "Plats au Poulet",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Poulet Palak",
+    "price": 17.0,
+    "description": "",
+    "category": "Plats au Poulet",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Poulet Dal",
+    "price": 17.0,
+    "description": "",
+    "category": "Plats au Poulet",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Poulet Aloo",
+    "price": 17.0,
+    "description": "",
+    "category": "Plats au Poulet",
+    "badge": "spicy",
+    "image": ""
+  },
+  {
+    "name": "Poulet Taj au Beurre",
+    "price": 17.5,
+    "description": "",
+    "category": "Plats au Poulet",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Poulet Jalfrezi",
+    "price": 17.5,
+    "description": "",
+    "category": "Plats au Poulet",
+    "badge": "spicy",
+    "image": ""
+  },
+  {
+    "name": "Poulet Shahi Korma",
+    "price": 17.0,
+    "description": "",
+    "category": "Plats au Poulet",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Poulet Massala",
+    "price": 15.0,
+    "description": "Curry de poulet avec poivrons, tomates, oignons et épices",
+    "category": "Plats au Poulet",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Poulet Shai Korma",
+    "price": 16.0,
+    "description": "Curry de poulet, sauce crème, amandes, coco, beurre",
+    "category": "Plats au Poulet",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Poulet Jall Frezi",
+    "price": 16.0,
+    "description": "Poulet grillé au charbon, mariné au curry, oignons, poivrons",
+    "category": "Plats au Poulet",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Bœuf Masala",
+    "price": 16.5,
+    "description": "",
+    "category": "Plats au Bœuf",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Bœuf Vindaloo",
+    "price": 16.5,
+    "description": "",
+    "category": "Plats au Bœuf",
+    "badge": "spicy",
+    "image": ""
+  },
+  {
+    "name": "Bœuf Kashmiri",
+    "price": 16.5,
+    "description": "",
+    "category": "Plats au Bœuf",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Bœuf Madras",
+    "price": 16.5,
+    "description": "",
+    "category": "Plats au Bœuf",
+    "badge": "spicy",
+    "image": ""
+  },
+  {
+    "name": "Bœuf Aloo",
+    "price": 16.5,
+    "description": "",
+    "category": "Plats au Bœuf",
+    "badge": "spicy",
+    "image": ""
+  },
+  {
+    "name": "Boeuf Massala",
+    "price": 16.0,
+    "description": "Boeuf avec poivrons, tomates, oignons et épices",
+    "category": "Plats au Bœuf",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Boeuf Vindaloo",
+    "price": 16.0,
+    "description": "Boeuf à la sauce moyennement relevée",
+    "category": "Plats au Bœuf",
+    "badge": "spicy",
+    "image": ""
+  },
+  {
+    "name": "Boeuf Madras",
+    "price": 16.0,
+    "description": "Boeuf à la sauce pimentée",
+    "category": "Plats au Bœuf",
+    "badge": "spicy",
+    "image": ""
+  },
+  {
+    "name": "Crevettes Malai",
+    "price": 18.0,
+    "description": "",
+    "category": "Plats aux Fruits de Mer",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Crevettes Madras",
+    "price": 18.0,
+    "description": "",
+    "category": "Plats aux Fruits de Mer",
+    "badge": "spicy",
+    "image": ""
+  },
+  {
+    "name": "Crevettes Masala",
+    "price": 18.0,
+    "description": "",
+    "category": "Plats aux Fruits de Mer",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Gambas Malai",
+    "price": 19.0,
+    "description": "",
+    "category": "Plats aux Fruits de Mer",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Gambas Masala",
+    "price": 19.0,
+    "description": "",
+    "category": "Plats aux Fruits de Mer",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Gambas Madras",
+    "price": 19.0,
+    "description": "",
+    "category": "Plats aux Fruits de Mer",
+    "badge": "spicy",
+    "image": ""
+  },
+  {
+    "name": "Crevettes Massala",
+    "price": 17.0,
+    "description": "Curry de crevettes avec des aromates frais",
+    "category": "Plats aux Fruits de Mer",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Gambas Massala",
+    "price": 18.0,
+    "description": "Curry de gambas avec des aromates frais et épices",
+    "category": "Plats aux Fruits de Mer",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Prawn Fried Rice",
+    "price": 15.0,
+    "description": "Riz sauté aux crevettes",
+    "category": "Plats aux Fruits de Mer",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Prawn Noodles",
+    "price": 15.0,
+    "description": "Nouilles sautées aux crevettes",
+    "category": "Plats aux Fruits de Mer",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Prawn Chili",
+    "price": 15.9,
+    "description": "Crevettes marinées aux épices chinoises, sauce soja",
+    "category": "Plats aux Fruits de Mer",
+    "badge": "spicy",
+    "image": ""
+  },
+  {
+    "name": "Prawn Manchurian",
+    "price": 16.9,
+    "description": "Crevettes sautées coriandre, gingembre en sauce chinoise",
+    "category": "Plats aux Fruits de Mer",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Baingan Bharta",
+    "price": 13.0,
+    "description": "",
+    "category": "Plats Végétariens",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Dal Curry",
+    "price": 13.0,
+    "description": "",
+    "category": "Plats Végétariens",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Aloo Palak",
+    "price": 13.0,
+    "description": "",
+    "category": "Plats Végétariens",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Curry de Légumes",
+    "price": 12.0,
+    "description": "",
+    "category": "Plats Végétariens",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Légumes Korma",
+    "price": 13.0,
+    "description": "",
+    "category": "Plats Végétariens",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Palak Paneer",
+    "price": 13.0,
+    "description": "",
+    "category": "Plats Végétariens",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Dahl",
+    "price": 12.0,
+    "description": "Curry de lentilles au beurre",
+    "category": "Plats Végétariens",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Agneau Biryani",
+    "price": 18.0,
+    "description": "",
+    "category": "Biryanis",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Bœuf Biryani",
+    "price": 18.0,
+    "description": "",
+    "category": "Biryanis",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Crevettes Biryani",
+    "price": 18.0,
+    "description": "",
+    "category": "Biryanis",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Gambas Biryani",
+    "price": 19.0,
+    "description": "",
+    "category": "Biryanis",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Légumes Biryani",
+    "price": 15.0,
+    "description": "",
+    "category": "Biryanis",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Mixte Biryani",
+    "price": 20.0,
+    "description": "",
+    "category": "Biryanis",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Poulet Briani",
+    "price": 17.0,
+    "description": "Poulet mijoté au riz avec épices",
+    "category": "Biryanis",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Agneau Briani",
+    "price": 17.0,
+    "description": "Agneau mijoté au riz avec épices",
+    "category": "Biryanis",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Boeuf Briani",
+    "price": 17.0,
+    "description": "Boeuf mijoté au riz avec épices",
+    "category": "Biryanis",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Crevettes Briani",
+    "price": 17.0,
+    "description": "Crevettes mijotées au riz avec épices",
+    "category": "Biryanis",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Gambas Briani",
+    "price": 18.0,
+    "description": "Gambas mijotées au riz avec épices",
+    "category": "Biryanis",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Légumes Briani",
+    "price": 14.0,
+    "description": "Légumes mijotés au riz avec épices",
+    "category": "Biryanis",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Mixt Briani",
+    "price": 19.0,
+    "description": "Crevettes, agneau, poulet, légumes mijotés au riz",
+    "category": "Biryanis",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Spring Rolls Chicken",
+    "price": 8.9,
+    "description": "Nems au poulet, croustillants et dorés",
+    "category": "Indo-Asiatique",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Spring Rolls Veg",
+    "price": 7.9,
+    "description": "Nems aux légumes, croustillants et dorés",
+    "category": "Indo-Asiatique",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Chicken Soup",
+    "price": 8.0,
+    "description": "Bouillon de poulet aux légumes et épices",
+    "category": "Indo-Asiatique",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Chicken Fried Rice",
+    "price": 14.0,
+    "description": "Riz sauté au poulet",
+    "category": "Indo-Asiatique",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Chicken Noodles",
+    "price": 14.0,
+    "description": "Nouilles sautées au poulet",
+    "category": "Indo-Asiatique",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Vegetable Noodles",
+    "price": 13.9,
+    "description": "Nouilles sautées aux légumes",
+    "category": "Indo-Asiatique",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Chicken Chili",
+    "price": 15.9,
+    "description": "Poulet mariné aux épices chinoises, poivron, sauce soja",
+    "category": "Indo-Asiatique",
+    "badge": "spicy",
+    "image": ""
+  },
+  {
+    "name": "Beef Chili",
+    "price": 15.9,
+    "description": "Boeuf mariné aux épices chinoises, poivron, sauce soja",
+    "category": "Indo-Asiatique",
+    "badge": "spicy",
+    "image": ""
+  },
+  {
+    "name": "Honey Chilli Potatoes",
+    "price": 13.9,
+    "description": "Pommes de terre aux épices chinoises, poivron, sauce soja",
+    "category": "Indo-Asiatique",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Chicken Manchurian",
+    "price": 15.9,
+    "description": "Poulet sauté coriandre, gingembre, ail en sauce chinoise",
+    "category": "Indo-Asiatique",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Veg Manchurian",
+    "price": 13.9,
+    "description": "Légumes de saison coriandre, gingembre en sauce chinoise",
+    "category": "Indo-Asiatique",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Naan au fromage",
+    "price": 4.0,
+    "description": "",
+    "category": "Naan & Pains Indiens",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Naan",
+    "price": 2.0,
+    "description": "",
+    "category": "Naan & Pains Indiens",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Paratha",
+    "price": 2.0,
+    "description": "",
+    "category": "Naan & Pains Indiens",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Garlic Naan",
+    "price": 4.0,
+    "description": "",
+    "category": "Naan & Pains Indiens",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Naan Fromage au Piment Vert",
+    "price": 4.5,
+    "description": "",
+    "category": "Naan & Pains Indiens",
+    "badge": "spicy",
+    "image": ""
+  },
+  {
+    "name": "Sandwich Naan Fromage",
+    "price": 1.0,
+    "description": "Avec frites · Midi sur place, soir à emporter",
+    "category": "Naan & Pains Indiens",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Naan Nature",
+    "price": 2.0,
+    "description": "Pâte à pain levée, nature",
+    "category": "Naan & Pains Indiens",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Naan Fromage Piment Vert",
+    "price": 4.0,
+    "description": "Naan fromage au piment vert",
+    "category": "Naan & Pains Indiens",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Formule Déjeuner",
+    "price": 15.0,
+    "description": "Uniquement le midi · Riz basmati et naan fromage inclus",
+    "category": "Nos Menus",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Menu Taj Mahal",
+    "price": 26.9,
+    "description": "À volonté dim. soir → ven. midi · 1 Naan inclus",
+    "category": "Nos Menus",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Menu 24,50€",
+    "price": 24.0,
+    "description": "Entrée + Plat + Dessert au choix",
+    "category": "Nos Menus",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Menu 29,50€",
+    "price": 29.0,
+    "description": "Entrée + Plat premium + Dessert au choix",
+    "category": "Nos Menus",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Assiette Brochettes",
+    "price": 1.0,
+    "description": "Avec frites et riz sauté ou pois chiche",
+    "category": "Nos Menus",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Halwa",
+    "price": 6.0,
+    "description": "",
+    "category": "Desserts Indiens",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Kulfi",
+    "price": 6.0,
+    "description": "Glace indienne à la pistache et amandes",
+    "category": "Desserts Indiens",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Coupe Taj",
+    "price": 6.0,
+    "description": "Glace vanille et gâteau maison, amandes, coco",
+    "category": "Desserts Indiens",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Glace 2 Parfums",
+    "price": 6.0,
+    "description": "Vanille, Pistache, Caramel au choix",
+    "category": "Desserts Indiens",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Fondant Chocolat",
+    "price": 7.0,
+    "description": "Fondant au chocolat avec boule de glace vanille",
+    "category": "Desserts Indiens",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Nougat Glacé",
+    "price": 7.0,
+    "description": "Nougat glacé maison",
+    "category": "Desserts Indiens",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Vacherin",
+    "price": 7.0,
+    "description": "Vanille et Framboise",
+    "category": "Desserts Indiens",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Coco Givré",
+    "price": 7.0,
+    "description": "Sorbet noix de coco",
+    "category": "Desserts Indiens",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Colonel",
+    "price": 8.0,
+    "description": "Sorbet citron vert arrosé de vodka",
+    "category": "Desserts Indiens",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Coupe Poire",
+    "price": 8.0,
+    "description": "Sorbet poire arrosé de Poire Williams",
+    "category": "Desserts Indiens",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Coupe Iceberg",
+    "price": 8.0,
+    "description": "Glace menthe arrosée de Get 27",
+    "category": "Desserts Indiens",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Coca‑Cola 33 cl",
+    "price": 3.0,
+    "description": "",
+    "category": "Boissons",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Coca-Cola – 1,25 L",
+    "price": 5.0,
+    "description": "",
+    "category": "Boissons",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Coca-Cola Cherry – 33 cl",
+    "price": 3.0,
+    "description": "",
+    "category": "Boissons",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Fanta Orange – 33 cl",
+    "price": 3.0,
+    "description": "",
+    "category": "Boissons",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Fanta Citron – 33 cl",
+    "price": 3.0,
+    "description": "",
+    "category": "Boissons",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Sprite – 33 cl",
+    "price": 3.0,
+    "description": "",
+    "category": "Boissons",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Perrier 33 cl – 33 cl",
+    "price": 3.0,
+    "description": "",
+    "category": "Boissons",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Limonade",
+    "price": 3.0,
+    "description": "Limonade fraîche maison",
+    "category": "Boissons",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Orangina / Ice Tea",
+    "price": 3.0,
+    "description": "Orangina ou Ice Tea",
+    "category": "Boissons",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Diabolo",
+    "price": 3.0,
+    "description": "Diabolo menthe ou grenadine",
+    "category": "Boissons",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Evian 50cl",
+    "price": 5.0,
+    "description": "Eau minérale naturelle",
+    "category": "Boissons",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Evian 25cl",
+    "price": 4.0,
+    "description": "Eau minérale naturelle demi",
+    "category": "Boissons",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Badoit 50cl",
+    "price": 5.0,
+    "description": "Eau gazeuse Badoit",
+    "category": "Boissons",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Heineken",
+    "price": 4.0,
+    "description": "Bière Heineken",
+    "category": "Boissons",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Bière Indienne",
+    "price": 5.0,
+    "description": "Bière indienne importée",
+    "category": "Boissons",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Lassi Mangue",
+    "price": 4.0,
+    "description": "Lassi à la mangue fraîche",
+    "category": "Boissons",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Lassi Sucré",
+    "price": 3.0,
+    "description": "Lassi sucré traditionnel",
+    "category": "Boissons",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Lassi Salé",
+    "price": 3.0,
+    "description": "Lassi salé",
+    "category": "Boissons",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Lassi Nature",
+    "price": 3.0,
+    "description": "Lassi nature",
+    "category": "Boissons",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Thé Indien au Lait",
+    "price": 4.0,
+    "description": "Thé indien traditionnel au lait",
+    "category": "Boissons",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Thé Cardamone & Cannelle",
+    "price": 4.0,
+    "description": "Thé aux épices douces",
+    "category": "Boissons",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Thé à la Menthe",
+    "price": 4.0,
+    "description": "Thé à la menthe fraîche",
+    "category": "Boissons",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Café",
+    "price": 1.7,
+    "description": "Café expresso",
+    "category": "Boissons",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Café Crème",
+    "price": 2.0,
+    "description": "Café avec crème",
+    "category": "Boissons",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Mojito",
+    "price": 6.0,
+    "description": "Rhum, citron vert, menthe fraîche, eau pétillante",
+    "category": "Boissons",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Sex On The Beach",
+    "price": 6.0,
+    "description": "Vodka, mangue, passion et pêche blanche",
+    "category": "Boissons",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Virgin Mojito",
+    "price": 6.0,
+    "description": "Sans alcool: citron vert, menthe, eau pétillante",
+    "category": "Boissons",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Coupe de Champagne",
+    "price": 9.0,
+    "description": "Coupe de champagne",
+    "category": "Boissons",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Riz Basmati",
+    "price": 4.0,
+    "description": "",
+    "category": "Accompagnements",
+    "badge": "",
+    "image": ""
+  },
+  {
+    "name": "Riz au Curry",
+    "price": 5.0,
+    "description": "Riz basmati au curry",
+    "category": "Accompagnements",
+    "badge": "veg",
+    "image": ""
+  },
+  {
+    "name": "Poulet Biryani",
+    "price": 18.0,
+    "description": "",
+    "category": "Spécialités du Chef",
+    "badge": "chef",
+    "image": ""
+  }
+];
+
+window.uploadMenu = async function() {
+  const btn = document.getElementById('startBtn');
+  const log = document.getElementById('log');
+  const done = document.getElementById('done');
+  btn.disabled = true;
+  btn.textContent = 'Uploading...';
+  
+  log.innerHTML = '<div class="log-info">Starting upload...</div>';
+  
+  // First, clear existing menu items
+  log.innerHTML += '<div class="log-info">Clearing old menu items...</div>';
+  try {
+    const existing = await getDocs(collection(db, 'menu'));
+    let delCount = 0;
+    for (const d of existing.docs) {
+      await deleteDoc(doc(db, 'menu', d.id));
+      delCount++;
+    }
+    log.innerHTML += '<div class="log-ok">Cleared ' + delCount + ' old items</div>';
+  } catch(e) {
+    log.innerHTML += '<div class="log-err">Clear error: ' + e.message + '</div>';
+  }
+  
+  // Upload new items
+  let ok = 0, fail = 0;
+  for (let i = 0; i < MENU_DATA.length; i++) {
+    const item = MENU_DATA[i];
+    try {
+      await addDoc(collection(db, 'menu'), {
+        name: item.name,
+        price: item.price,
+        description: item.description || '',
+        category: item.category,
+        badge: item.badge || '',
+        image: item.image || ''
+      });
+      ok++;
+      if (ok % 20 === 0 || i === MENU_DATA.length - 1) {
+        log.innerHTML += '<div class="log-ok">Uploaded ' + ok + '/' + MENU_DATA.length + '</div>';
+      }
+    } catch(e) {
+      fail++;
+      log.innerHTML += '<div class="log-err">Error: ' + item.name + ' - ' + e.message + '</div>';
+    }
+  }
+  
+  log.innerHTML += '<div class="log-ok"><strong>Done! ' + ok + ' items uploaded, ' + fail + ' errors</strong></div>';
+  btn.textContent = 'Complete!';
+  done.style.display = 'block';
+};
+</script>
+</body>
+</html>
