@@ -278,6 +278,15 @@ input[type=checkbox].toggle:checked::after{left:23px;}
 
 .hidden{display:none!important;}
 .loading-line{color:var(--text-muted);text-align:center;padding:40px;font-size:11px;letter-spacing:3px;text-transform:uppercase;}
+
+/* ─── FIREBASE STATUS ─── */
+.fb-status{
+  border-radius:50px;padding:4px 14px;font-size:9px;font-weight:700;letter-spacing:2px;
+  text-transform:uppercase;transition:all .3s;display:inline-flex;align-items:center;gap:4px;
+}
+.fb-status.connecting{background:rgba(234,179,8,0.1);color:var(--pending);border:1px solid var(--pending-border);animation:blink 2s infinite;}
+.fb-status.connected{background:rgba(34,139,34,0.1);color:var(--ready);border:1px solid rgba(34,139,34,0.25);}
+.fb-status.error{background:var(--danger-bg);color:var(--danger);border:1px solid rgba(239,68,68,0.25);}
 </style>
 </head>
 <body>
@@ -317,6 +326,7 @@ input[type=checkbox].toggle:checked::after{left:23px;}
   <div class="topbar">
     <div class="page-title" id="page-title">Commandes en Cours</div>
     <div class="topbar-stats">
+      <span id="fb-status" class="fb-status connecting">🔥 Connexion…</span>
       <button onclick="testFirebase()" style="background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid var(--gold-dim);border-radius:6px;padding:5px 12px;font-size:10px;font-weight:700;letter-spacing:1px;cursor:pointer;text-transform:uppercase;font-family:'Lato',sans-serif;transition:all .2s;" title="Write a test order to Firebase to verify connection">🧪 Test</button>
       <div class="stat-chip pending" onclick="showTab('live');filterOrders('pending')">
         <span id="t-pending">0</span>&nbsp;En attente
@@ -534,10 +544,25 @@ const firebaseConfig = {
   messagingSenderId: "347604539540",
   appId: "1:347604539540:web:78fc0e40fa8fee5bca63c8"
 };
-const app = initializeApp(firebaseConfig);
-console.log('[Reception] Firebase app initialized');
-const db = getFirestore(app);
-console.log('[Reception] Firestore instance created');
+let app, db;
+try{
+  app = initializeApp(firebaseConfig);
+  console.log('[Reception] ✅ Firebase app initialized successfully');
+  db = getFirestore(app);
+  console.log('[Reception] ✅ Firestore instance created successfully');
+  // Update connection status indicator
+  const fbStatus=document.getElementById('fb-status');
+  if(fbStatus){fbStatus.className='fb-status connected';fbStatus.textContent='🔥 Firebase connecté';}
+  // Update loading text
+  const loadingEl=document.querySelector('#orders-grid .loading-line');
+  if(loadingEl) loadingEl.textContent='Chargement des commandes…';
+}catch(err){
+  console.error('[Reception] ❌ Firebase init FAILED:', err);
+  const fbStatus=document.getElementById('fb-status');
+  if(fbStatus){fbStatus.className='fb-status error';fbStatus.textContent='❌ Firebase erreur';}
+  const grid=document.getElementById('orders-grid');
+  if(grid) grid.innerHTML='<div style="color:var(--danger);text-align:center;padding:40px;font-size:14px;">❌ Erreur de connexion Firebase: '+err.message+'</div>';
+}
 
 // ── CLOCK ──
 function updateClock(){
@@ -707,16 +732,18 @@ function showNewOrder(table){
 
 // WAITER CALLS
 let waiterCallId = null;
-console.log('[Reception] Setting up waiter_calls onSnapshot listener...');
+console.log('[Reception] Setting up waiter_calls onSnapshot listener (no where clause, client-side filter)...');
 onSnapshot(
-  query(collection(db,'waiter_calls'),where('answered','==',false)),
+  collection(db,'waiter_calls'),
   snap=>{
     console.log('[Reception] waiter_calls snapshot received, size:', snap.size);
     snap.docChanges().forEach(ch=>{
       if(ch.type==='added'){
         const d=ch.doc.data();
+        // Client-side filter: only process unanswered calls
+        if(d.answered===true) return;
         waiterCallId=ch.doc.id;
-        console.log('[Reception] Waiter call from table:', d.table);
+        console.log('[Reception] 🔔 Waiter call from table:', d.table, '(answered:', d.answered, ')');
         document.getElementById('waiter-notif-title').textContent='TABLE '+d.table+' — APPEL SERVEUR';
         document.getElementById('waiter-notif-msg').textContent='Un client à la table '+d.table+' demande assistance.';
         document.getElementById('waiter-notif').classList.add('show');
@@ -735,7 +762,8 @@ onSnapshot(
     });
   },
   error=>{
-    console.error('[Reception] waiter_calls onSnapshot ERROR:', error.code, error.message);
+    console.error('[Reception] ❌ waiter_calls onSnapshot ERROR:', error.code, error.message);
+    console.error('[Reception] Full waiter_calls error:', error);
     showNotif('❌ Erreur listener appels: '+error.message);
   }
 );
@@ -763,17 +791,18 @@ window.testFirebase=async function(){
 };
 
 // ORDERS SNAPSHOT
-console.log('[Reception] Initializing Firebase orders listener...');
-const q=query(collection(db,'orders'),where('status','in',['pending','preparing','ready','served','cancelled']));
-console.log('[Reception] Query created: collection=orders, where status in [pending,preparing,ready,served,cancelled]');
+console.log('[Reception] Initializing Firebase orders listener (no where clause, client-side filter)...');
+const ACTIVE_STATUSES = ['pending','preparing','ready','served','cancelled'];
 
-onSnapshot(q,
+onSnapshot(collection(db,'orders'),
   snap=>{
     console.log('[Reception] Orders snapshot received, size:', snap.size, 'isFirst:', isFirst);
     snap.docChanges().forEach(ch=>{
       const id=ch.doc.id, data=ch.doc.data();
       console.log('[Reception] Order change:', ch.type, 'id:', id, 'status:', data.status, 'table:', data.table);
       if(ch.type==='removed'){delete allOrders[id];return;}
+      // Client-side filter: only keep orders with active statuses
+      if(!ACTIVE_STATUSES.includes(data.status)){delete allOrders[id];return;}
       allOrders[id]=data;
       if(!isFirst&&ch.type==='added'&&(data.status==='pending'||data.status==='preparing')){
         console.log('[Reception] 🆕 NEW ORDER detected! Table:', data.table);
@@ -789,11 +818,15 @@ onSnapshot(q,
   },
   error=>{
     console.error('[Reception] ❌ Orders onSnapshot ERROR:', error.code, error.message);
-    console.error('[Reception] Full error:', error);
+    console.error('[Reception] Full orders error:', error);
     showNotif('❌ Erreur listener commandes: '+error.message);
     // If permission denied, show helpful message
     if(error.code==='permission-denied'){
       console.error('[Reception] PERMISSION DENIED — Check Firestore security rules allow read on orders collection');
+    }
+    // If index required, show helpful message
+    if(error.code==='failed-precondition'||error.message.includes('index')){
+      console.error('[Reception] INDEX ERROR — This is why we removed the where clause. The query requires a composite index that does not exist.');
     }
   }
 );

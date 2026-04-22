@@ -121,7 +121,7 @@ body{
 .btn-enter:active{ transform: scale(0.97); }
 
 /* ═══ APP ═══ */
-#app{ display: none; min-height: 100vh; padding-bottom: 20px; }
+#app{ display: none; min-height: 100vh; padding-bottom: 130px; }
 #app.show{ display: block; }
 
 /* ═══ HERO ═══ */
@@ -586,6 +586,44 @@ body{
 .social-btn.google{background:white;color:#333;box-shadow:0 4px 15px rgba(0,0,0,0.15);}
 .social-btn.google:hover{box-shadow:0 6px 20px rgba(0,0,0,0.2);}
 .social-icon{font-size:1.1rem;}
+
+/* ═══ WAITER BUZZER ═══ */
+.waiter-buzzer{
+  position:fixed;
+  bottom:70px;
+  left:12px;
+  right:12px;
+  z-index:510;
+  background:linear-gradient(135deg,#9B111E,#CC5500);
+  color:white;
+  border:none;
+  border-radius:50px;
+  padding:16px 24px;
+  font-family:'Lato',sans-serif;
+  font-size:15px;
+  font-weight:900;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  box-shadow:0 6px 30px rgba(155,17,30,0.5);
+  animation:waiterPulse 2s ease-in-out infinite;
+  transition:all .3s;
+}
+.waiter-buzzer:active{transform:scale(0.97);}
+.waiter-buzzer.called{
+  background:#666;
+  animation:none;
+  box-shadow:0 2px 10px rgba(0,0,0,0.2);
+}
+@keyframes waiterPulse{
+  0%,100%{box-shadow:0 6px 30px rgba(155,17,30,0.5);}
+  50%{box-shadow:0 6px 50px rgba(204,85,0,0.8);}
+}
+.waiter-buzzer .buzzer-icon{font-size:1.3rem;}
 </style>
 </head>
 <body>
@@ -608,6 +646,10 @@ body{
 
 <!-- ═══ APP ═══ -->
 <div id="app">
+
+<button class="waiter-buzzer" id="waiter-buzzer" onclick="callWaiter()">
+  <span class="buzzer-icon">🔔</span> Appeler le Serveur
+</button>
 
   <!-- HERO -->
   <section class="hero">
@@ -2710,7 +2752,7 @@ window.addEventListener('scroll', () => {
     <a href="https://www.instagram.com/tajmahalrestaurant/" target="_blank" rel="noopener" class="social-btn instagram">
       <span class="social-icon">&#128247;</span> Instagram
     </a>
-    <a href="https://search.google.com/local/writereview?placeid=YOUR_PLACE_ID" target="_blank" rel="noopener" class="social-btn google">
+    <a href="https://search.google.com/local/writereview?placeid=ChIJix6rMJPj1RQR4b8e7jS2Y5s" target="_blank" rel="noopener" class="social-btn google">
       <span class="social-icon">&#11088;</span> Google
     </a>
   </div>
@@ -2796,9 +2838,11 @@ let waiterCooldown=false;
 window.callWaiter=async function(){
   if(waiterCooldown){showToast('&#9203; Serveur d\u00e9j\u00e0 appel\u00e9');return;}
   const btn=document.getElementById('waiter-btn');
+  const buzzer=document.getElementById('waiter-buzzer');
   if(btn)btn.classList.add('calling');
-  try{await addDoc(collection(db,'waiter_calls'),{table:tableNum,answered:false,createdAt:serverTimestamp()});showToast('&#128276; Serveur appel\u00e9 &#8212; il arrive!');waiterCooldown=true;setTimeout(()=>{if(btn)btn.classList.remove('calling');waiterCooldown=false;},30000);}
-  catch(e){if(btn)btn.classList.remove('calling');showToast('&#10060; '+e.message);}
+  if(buzzer){buzzer.classList.add('called');buzzer.innerHTML='<span class="buzzer-icon">✓</span> SERVEUR APPELÉ';}
+  try{await addDoc(collection(db,'waiter_calls'),{table:tableNum,answered:false,createdAt:serverTimestamp()});showToast('&#128276; Serveur appel\u00e9 &#8212; il arrive!');waiterCooldown=true;setTimeout(()=>{if(btn)btn.classList.remove('calling');if(buzzer){buzzer.classList.remove('called');buzzer.innerHTML='<span class="buzzer-icon">🔔</span> Appeler le Serveur';}waiterCooldown=false;},30000);}
+  catch(e){if(btn)btn.classList.remove('calling');if(buzzer){buzzer.classList.remove('called');buzzer.innerHTML='<span class="buzzer-icon">🔔</span> Appeler le Serveur';}showToast('&#10060; '+e.message);}
 };
 let currentRating=0;
 window.rateStar=function(n){
@@ -2819,6 +2863,37 @@ function showToast(msg){let t=document.getElementById('menu-toast');if(!t){t=doc
 document.addEventListener('DOMContentLoaded',()=>{
   // Store item data globally for reliable access
   window._itemData={};
+
+  // Image fallbacks by category
+  const imgFallbacks={
+    'Entr\u00e9es':'https://images.unsplash.com/photo-1541014741259-de529411b96a?w=400&h=300&fit=crop',
+    'Naans':'https://images.unsplash.com/photo-1601050690117-94f5f6fa8bd7?w=400&h=300&fit=crop',
+    'Poulet':'https://images.unsplash.com/photo-1610057099443-fde6c99db9e1?w=400&h=300&fit=crop',
+    'Agneau':'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400&h=300&fit=crop',
+    'Boeuf':'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400&h=300&fit=crop',
+    'Crevettes':'https://images.unsplash.com/photo-1565680018093-ebb6b9ab5460?w=400&h=300&fit=crop',
+    'Gambas':'https://images.unsplash.com/photo-1565680018093-ebb6b9ab5460?w=400&h=300&fit=crop',
+    'Poisson':'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=400&h=300&fit=crop',
+    'V\u00e9g\u00e9tarien':'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=400&h=300&fit=crop',
+    'Biryanis':'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=400&h=300&fit=crop',
+    'Riz':'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=400&h=300&fit=crop',
+    'Accompagnements':'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400&h=300&fit=crop',
+    'Desserts':'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=400&h=300&fit=crop',
+    'Boissons':'https://images.unsplash.com/photo-1544145945-f90425340c7e?w=400&h=300&fit=crop',
+    'default':'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400&h=300&fit=crop'
+  };
+  // Find each card's section/category and set onerror
+  document.querySelectorAll('.card').forEach(card=>{
+    const img=card.querySelector('.card-img img');
+    if(img){
+      // Try to find the category from the section header
+      const section=card.closest('.sec');
+      const catName=section?section.querySelector('.sec-title')?.textContent?.trim():'';
+      const fallback=imgFallbacks[catName]||imgFallbacks['default'];
+      img.onerror=function(){this.src=fallback;this.onerror=null;};
+    }
+  });
+
   document.querySelectorAll('.card').forEach((card,idx)=>{
     const nameEl=card.querySelector('.card-name');const priceEl=card.querySelector('.card-price');
     if(!nameEl||!priceEl)return;
