@@ -726,12 +726,13 @@ window.dismissWaiter = async function(){
   }
 };
 
-// ORDERS SNAPSHOT
-const q=query(collection(db,'orders'),where('status','in',['pending','preparing','ready','served','cancelled']));
-onSnapshot(q,snap=>{
+// ORDERS SNAPSHOT — listen to all orders, filter in JS (avoids Firestore index requirements)
+onSnapshot(collection(db,'orders'),snap=>{
   snap.docChanges().forEach(ch=>{
     const id=ch.doc.id, data=ch.doc.data();
     if(ch.type==='removed'){delete allOrders[id];return;}
+    const validStatuses=['pending','preparing','ready','served','cancelled'];
+    if(!validStatuses.includes(data.status)){return;}
     allOrders[id]=data;
     if(!isFirst&&ch.type==='added'&&(data.status==='pending'||data.status==='preparing')){
       showNewOrder(data.table);
@@ -741,7 +742,7 @@ onSnapshot(q,snap=>{
   isFirst=false;
   updateCounters();
   renderOrders();
-  renderHistory(allOrders);
+  renderHistory();
 });
 
 // ── QZ TRAY PRINTING ──
