@@ -260,7 +260,7 @@ body{background:var(--cream);color:var(--dark);font-family:'Lato',sans-serif;min
   <div class="splash-divider"></div>
   <div class="splash-rating">
     <span class="splash-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
-    <span class="splash-rating-num">4.8</span>
+    <span class="splash-rating-num">4.4</span>
     <span class="splash-rating-lbl">Google</span>
   </div>
   <button class="btn-enter" onclick="enterApp()">Voir le Menu</button>
@@ -270,14 +270,14 @@ body{background:var(--cream);color:var(--dark);font-family:'Lato',sans-serif;min
 <div id="app">
   <!-- HERO -->
   <div class="hero">
-    <img class="hero-img" src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=600&fit=crop" alt="Restaurant Taj Mahal">
+    <img class="hero-img" src="https://tb-static.uber.com/prod/image-proc/processed_images/d003086f3c04cddc194a8def54178d27/783282f6131ef2258e5bcd87c46aa87e.jpeg" alt="Restaurant Taj Mahal" onerror="this.src='https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=600&fit=crop'">
     <div class="hero-overlay">
       <img class="hero-logo-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/Taj_Mahal_%28logo%29.svg/1200px-Taj_Mahal_%28logo%29.svg.png" alt="Logo" onerror="this.style.display='none'">
       <div class="hero-name">TAJ MAHAL</div>
       <div class="hero-tagline">Cuisine Indienne Authentique</div>
       <div class="hero-info">
-        <span>&#128205; 12 Rue de la Paix</span>
-        <span>&#128222; 01 23 45 67 89</span>
+        <span>&#128205; 37 Rue Berbisey, Dijon</span>
+        <span>&#128222; 03 80 30 54 61</span>
       </div>
       <div class="hero-table" id="table-display">Table ?</div>
     </div>
@@ -285,9 +285,9 @@ body{background:var(--cream);color:var(--dark);font-family:'Lato',sans-serif;min
 
   <!-- RATING BAR -->
   <div class="rating-bar">
-    <div class="r-stat"><span class="r-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span><span class="val">4.8</span></div>
+    <div class="r-stat"><span class="r-stars">&#9733;&#9733;&#9733;&#9733;&#9734;</span><span class="val">4.4</span></div>
     <div class="r-stat">&#128338; <span class="val">25 min</span> en moyenne</div>
-    <div class="r-stat">&#127775; <span class="val">500+</span> avis</div>
+    <div class="r-stat">&#127775; <span class="val">800+</span> avis</div>
   </div>
 
   <!-- CATEGORY NAV -->
@@ -322,15 +322,15 @@ body{background:var(--cream);color:var(--dark);font-family:'Lato',sans-serif;min
         </a>
       </div>
       <div class="rev-divider2"></div>
-      <div class="rev-address">12 Rue de la Paix, 75002 Paris<br>Ouvert tous les jours 12h-14h30 / 19h-23h</div>
+      <div class="rev-address">37 Rue Berbisey, 21000 Dijon<br>Ouvert Mar-Dim 12h-14h / 19h-22h30</div>
     </div>
   </div>
 
   <!-- FOOTER -->
   <div class="footer">
     <span class="footer-brand">TAJ MAHAL</span>
-    Cuisine Indienne Authentique &mdash; Depuis 2005<br>
-    &copy; 2024 Taj Mahal Restaurant. Tous droits r&eacute;serv&eacute;s.
+    Cuisine Indienne Authentique &mdash; Dijon<br>
+    &copy; 2025 Taj Mahal Restaurant. Tous droits r&eacute;serv&eacute;s.
   </div>
 </div>
 
@@ -439,6 +439,90 @@ try {
 // Table number from URL
 const tableNum = new URLSearchParams(window.location.search).get('table') || '?';
 
+// ── PRODUCT IMAGES (from original menu) ──
+const PRODUCT_IMAGES = {
+  'Cheese Naan Kebab': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898756/akznif7hkrqushbwbayj.webp',
+  'Cheese Naan Tikka': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898757/n90v7nncweln28h8cmci.webp',
+  'Brochette Tikka': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898760/p16tlpobswxiivsuagzw.webp',
+  'Brochette Sheekh Kebab': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898762/qd2knxcrclhfujn533no.webp',
+  'Brochette d’Agneau': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898764/wrmwiwoup51hzoewkmwk.webp',
+  'Mix Pakora': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898766/qtcuhqegf0937urxbnq4.webp',
+  'Mixte Grill': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898769/izhuuzromn7svaqjutf2.webp',
+  'Baingan Pakora': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898771/bd6dv2qnx0kiy6jpg1gl.webp',
+  'Oignon Bhaja': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898773/dkjonqv3ffmky0a95xba.webp',
+  'Aloo Pakora': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898775/w95nbgfgyfan6xtub4ig.webp',
+  'Fish Pakora': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898777/jjc78j2a93iyubjfm15h.webp',
+  'Raita': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898779/ovxmovdy6f7jf7dzp7lo.webp',
+  'Raita Crevettes': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898782/vcyncipuozwuk8xy4f09.webp',
+  'Gambas Tandoori': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898784/ekah7bcgovpaunt5tjkl.webp',
+  'Poulet Tikka': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898786/mase1ryompskgykozvg0.webp',
+  'Agneau Tikka': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898788/oiefmyctfmlfrtf6cxch.webp',
+  'Sheekh Kebab': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898790/mctxbyeszgkyv2vqhosk.webp',
+  'Poulet Tandoori': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898792/r0rshkb5u9x4rdv2amd1.webp',
+  'Assiette Grill': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898795/re0hjvymo3qr9jxxv3jd.webp',
+  'Samosas Viande Hachée': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898797/tlgl6jsba4opwtv0tv4y.webp',
+  'Agneau Taj': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898799/ad41mmiwhf6fmxrbkuid.webp',
+  'Agneau Shahi Korma': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898801/y7a12alhtsl8xojtesd9.webp',
+  'Agneau Rogan Gosht': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898804/wskunlwpykgu6xwc1zno.webp',
+  'Agneau Madras': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898806/gtyf9tq3tbyrabxah4vk.webp',
+  'Agneau Dopiaza': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898808/t2vdr8dns4znuqmomn03.webp',
+  'Agneau Dal Gosht': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898810/ptw00ry3sjacmrw8fcei.webp',
+  'Agneau Palak': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898812/kgdtffv6pm3mvqmzpm2t.webp',
+  'Agneau Vindaloo': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898814/zkcq8vlfs7cftx3habpq.webp',
+  'Agneau Aloo Gosht': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898816/wfoaokrxifmvbpltpntl.webp',
+  'Agneau Masala': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898819/ry53oc9erbgumwl5lplt.webp',
+  'Agneau Jalfrezi': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898820/unptocjd5z6jptcfbqf9.webp',
+  'Poulet Masala': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898823/l0wkjdyh5ugo56kbacmd.webp',
+  'Poulet Dopiaza': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898825/kvmbx1eouddwhplksmbb.webp',
+  'Poulet Madras': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898827/qcwmrg7a9mzgonyxtyts.webp',
+  'Poulet Vindaloo': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898829/pi5e7wsllyqipz52fmjh.webp',
+  'Poulet Mughlai': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898831/nryndmebqd7jmyootb99.webp',
+  'Poulet Palak': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898833/vqkqmwzdqgcbzi4opeja.webp',
+  'Poulet Dal': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898835/whlydbsdcjf4ycmovove.webp',
+  'Poulet Aloo': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898837/tqam5i7tthnueuunzujb.webp',
+  'Poulet Taj au Beurre': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898840/yj8kiuhadagj94coanps.webp',
+  'Poulet Jalfrezi': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898842/flverffellbmq5w7allh.webp',
+  'Poulet Shahi Korma': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898845/dqz55smx7chalkl2iubx.webp',
+  'Bœuf Masala': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898847/q0zma9d6mwm75tsbodjp.webp',
+  'Bœuf Vindaloo': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898849/wxbtz8rna4jyajaouuo9.webp',
+  'Bœuf Kashmiri': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898851/fzkgaw3bhqv6y7zt4ovy.webp',
+  'Bœuf Madras': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898853/eqzamerfl6d2fqpburvm.webp',
+  'Bœuf Aloo': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898856/rquvk9ey4oincba0etig.webp',
+  'Crevettes Malai': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898858/xst1iqtoeuhavq9fjokv.webp',
+  'Crevettes Madras': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898861/d0rzgwfhheznm8gqinzl.webp',
+  'Crevettes Masala': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898863/lxmdsmdnggjuebbygwyo.webp',
+  'Gambas Malai': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898865/f1d2qzposycaseyodnny.webp',
+  'Gambas Masala': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898868/iomj388xnvkqxo5qhkyh.webp',
+  'Gambas Madras': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898869/jezcf1bgrzbg9ld1gxir.webp',
+  'Baingan Bharta': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898872/rg4rph6hjkafcp0azfod.webp',
+  'Dal Curry': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898874/gxvl1bxiqltavi1kagjh.webp',
+  'Aloo Palak': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898876/botzzlsp6uodckqa37nm.webp',
+  'Curry de Légumes': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898878/ky6yjxxjidrcjhzqyskj.webp',
+  'Légumes Korma': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898880/ws3rddfaipp4wbxpfnbl.webp',
+  'Palak Paneer': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898883/xjlyx0sep3rrov96vrma.webp',
+  'Agneau Biryani': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898886/r5rdifjn2buah185m8mj.webp',
+  'Bœuf Biryani': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898888/rnr7auhywev190bqjt71.webp',
+  'Crevettes Biryani': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898891/shdmobv3paewcfkicv01.webp',
+  'Gambas Biryani': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898893/cyifafcut73jh6dwxeri.webp',
+  'Légumes Biryani': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898895/pzwgeoxekswrlmdj81ja.webp',
+  'Mixte Biryani': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898897/nrpliebwgoxwbzxwxh4z.webp',
+  'Naan au fromage': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898900/w363wvntfakdlugkcu5w.webp',
+  'Naan': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898902/lgvalgj8o61oqg2xlhnf.webp',
+  'Paratha': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898905/kvua4d4d0sjkhdhzaax3.webp',
+  'Garlic Naan': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898907/kqyzvubsxfxoaccuaham.webp',
+  'Naan Fromage au Piment Vert': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898910/aznldtqjtyrzpwabxusu.webp',
+  'Halwa': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898912/qrdiyunejhz5ymz54gkx.webp',
+  'Coca‑Cola 33 cl': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898914/ft1uwutpi4rwja2qdv56.webp',
+  'Coca-Cola – 1,25 L': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898916/tlehn32vmbccnlznw4jn.webp',
+  'Coca-Cola Cherry – 33 cl': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898918/ftczovlotnjpgm1qjcux.webp',
+  'Fanta Orange – 33 cl': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898920/wzrixcfixdv7db3osczz.webp',
+  'Fanta Citron – 33 cl': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898922/qpgiyahobsnzam53d19e.webp',
+  'Sprite – 33 cl': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898925/xngk0mjtnl414tqbzjhn.webp',
+  'Perrier 33 cl – 33 cl': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898927/aqulmwtstwb9ggxshzve.webp',
+  'Riz Basmati': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898929/q9xdekiyxzkrpr8dpcq9.webp',
+  'Poulet Biryani': 'https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898931/zurkdf3jomo7zxgo5pk8.webp'
+};
+
 // ── CATEGORY IMAGE FALLBACKS ──
 const CATEGORY_IMAGES = {
   'entrées': 'https://images.unsplash.com/photo-1541014741259-de529411b96a?w=400&h=300&fit=crop',
@@ -476,9 +560,15 @@ function getFallbackImage(category) {
 }
 
 function getItemImage(item) {
+  // 1. Check if Firebase has a real image URL
   if (item.image && typeof item.image === 'string' && item.image.trim() !== '' && item.image.startsWith('http')) {
     return item.image;
   }
+  // 2. Check PRODUCT_IMAGES map (original images from old menu)
+  if (item.name && PRODUCT_IMAGES[item.name]) {
+    return PRODUCT_IMAGES[item.name];
+  }
+  // 3. Fallback to category stock image
   return getFallbackImage(item.category);
 }
 

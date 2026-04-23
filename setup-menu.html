@@ -3,1388 +3,169 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Taj Mahal — Setup Menu</title>
+<title>Taj Mahal - Setup Menu with ORIGINAL Images</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <style>
-body{font-family:'Lato',sans-serif;background:#FFFDD0;color:#1a0a05;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
-.setup-box{background:white;border-radius:20px;padding:40px;max-width:600px;width:100%;box-shadow:0 8px 40px rgba(155,17,30,0.15);border:1px solid rgba(201,168,76,0.2);text-align:center}
-h1{font-family:'Playfair Display',serif;color:#9B111E;margin-bottom:8px;font-size:1.6rem}
-p{color:#8B5A3C;font-size:0.9rem;margin-bottom:24px;line-height:1.6}
-.btn{background:#9B111E;color:white;border:none;border-radius:50px;padding:16px 40px;font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s;font-family:'Lato',sans-serif;box-shadow:0 6px 20px rgba(155,17,30,0.3)}
-.btn:hover{background:#C41E3A;transform:translateY(-2px)}
-.btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
-#log{margin-top:20px;text-align:left;background:#FFFDD0;border-radius:10px;padding:16px;max-height:300px;overflow-y:auto;font-size:12px;line-height:1.8;color:#3D1507}
-.log-ok{color:#228B22}
-.log-err{color:#EF4444}
-.log-info{color:#CC5500}
-.done{font-size:1.2rem;color:#228B22;font-weight:700;margin-top:16px}
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #1a0a0a; color: #FFFDD0; min-height: 100vh; }
+  .header { background: linear-gradient(135deg, #9B111E, #CC5500); padding: 30px; text-align: center; }
+  .header h1 { font-size: 28px; margin-bottom: 8px; }
+  .header p { font-size: 14px; opacity: 0.9; }
+  .stats { display: flex; gap: 15px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
+  .stat { background: rgba(155,17,30,0.3); border: 1px solid #9B111E; border-radius: 10px; padding: 15px 25px; text-align: center; }
+  .stat .num { font-size: 32px; font-weight: bold; }
+  .stat .label { font-size: 12px; opacity: 0.8; }
+  .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+  .btn { display: inline-block; padding: 15px 40px; background: linear-gradient(135deg, #9B111E, #CC5500); color: #FFFDD0; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; margin: 20px 0; transition: transform 0.2s; }
+  .btn:hover { transform: scale(1.05); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .progress { background: #2a1a1a; border-radius: 10px; overflow: hidden; margin: 20px 0; height: 30px; }
+  .progress-bar { background: linear-gradient(90deg, #9B111E, #CC5500); height: 100%; width: 0%; transition: width 0.3s; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; }
+  .category { margin: 20px 0; }
+  .category h3 { color: #CC5500; font-size: 18px; border-bottom: 1px solid #9B111E; padding-bottom: 8px; margin-bottom: 15px; }
+  .item { display: flex; gap: 12px; background: #2a1a1a; border-radius: 10px; padding: 12px; margin-bottom: 10px; align-items: center; }
+  .item img { width: 70px; height: 70px; border-radius: 8px; object-fit: cover; background: #3a2a2a; }
+  .item-info { flex: 1; }
+  .item-name { font-weight: bold; font-size: 14px; }
+  .item-desc { font-size: 11px; opacity: 0.7; margin-top: 3px; line-height: 1.3; }
+  .item-price { color: #CC5500; font-weight: bold; font-size: 16px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-left: 6px; }
+  .badge-original { background: #1a6b1a; color: #fff; }
+  .badge-uber { background: #0a5a8a; color: #fff; }
+  .badge-stock { background: #6b5a1a; color: #fff; }
+  .log { background: #0a0a0a; border-radius: 10px; padding: 15px; margin: 20px 0; max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 12px; line-height: 1.6; }
+  .log .success { color: #4CAF50; }
+  .log .error { color: #f44336; }
+  .log .info { color: #2196F3; }
+  .notice { background: #1a3a1a; border: 1px solid #2a6a2a; border-radius: 10px; padding: 16px; margin: 20px 0; font-size: 13px; line-height: 1.6; }
+  .notice strong { color: #4CAF50; }
 </style>
 </head>
 <body>
-<div class="setup-box">
-  <h1>Taj Mahal — Menu Setup</h1>
-  <p>This will upload <strong>161 menu items</strong> to your Firebase Firestore.<br>Click the button below to start. Only click once!</p>
-  <button class="btn" id="startBtn" onclick="uploadMenu()">Upload Menu to Firebase</button>
-  <div id="log"></div>
-  <div id="done" class="done" style="display:none">All items uploaded! You can close this page.</div>
+
+<div class="header">
+  <h1>Taj Mahal - Menu Setup</h1>
+  <p>Upload menu with YOUR ORIGINAL product images</p>
 </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+<div class="container">
+  <div class="notice">
+    <strong>Original Images Restored!</strong> All 80 menu items now use your original Cloudinary product photos. 
+    No stock images are used. This will replace the existing menu data in Firebase with the correct images.
+  </div>
 
+  <div class="stats">
+    <div class="stat"><div class="num" style="color:#4CAF50">80</div><div class="label">Your Original Images</div></div>
+    <div class="stat"><div class="num" style="color:#2196F3">0</div><div class="label">Uber Eats Images</div></div>
+    <div class="stat"><div class="num" style="color:#FFC107">0</div><div class="label">Stock Images</div></div>
+    <div class="stat"><div class="num">80</div><div class="label">Total Items</div></div>
+  </div>
+
+  <div style="text-align:center">
+    <button class="btn" id="uploadBtn" onclick="startUpload()">Upload Menu to Firebase</button>
+  </div>
+
+  <div class="progress" id="progressWrap" style="display:none">
+    <div class="progress-bar" id="progressBar">0%</div>
+  </div>
+
+  <div class="log" id="log" style="display:none"></div>
+
+  <div id="preview">
+    <div class="category"><h3>Nouveautés (5)</h3><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898757/n90v7nncweln28h8cmci.webp" alt="Cheese Naan Tikka" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Cheese Naan Tikka<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Morceaux de poulet tikka grillés au tandoor, enveloppés dans un naan au fromage </div></div><div class="item-price">€15.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898756/akznif7hkrqushbwbayj.webp" alt="Cheese Naan Kebab" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Cheese Naan Kebab<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Viande hachée marinée aux oignons et à la coriandre, enveloppée dans un naan au </div></div><div class="item-price">€15.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898762/qd2knxcrclhfujn533no.webp" alt="Brochette Sheekh Kebab" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Brochette Sheekh Kebab<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Brochette de viande hachée parfumée aux épices indiennes et grillée au tandoor p</div></div><div class="item-price">€12.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898764/wrmwiwoup51hzoewkmwk.webp" alt="Brochette d’Agneau" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Brochette d’Agneau<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Morceaux d’agneau marinés aux épices indiennes et grillés au tandoor pour une sa</div></div><div class="item-price">€13.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898760/p16tlpobswxiivsuagzw.webp" alt="Brochette Tikka" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Brochette Tikka<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Brochette de viande marinée aux épices indiennes, grillée au tandoor pour une sa</div></div><div class="item-price">€12.00</div></div></div><div class="category"><h3>Entrées & Spécialités Tandoor (15)</h3><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898769/izhuuzromn7svaqjutf2.webp" alt="Mixte Grill" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Mixte Grill<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Assortiment de grillades tandoor et de beignets croustillants aux épices indienn</div></div><div class="item-price">€24.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898786/mase1ryompskgykozvg0.webp" alt="Poulet Tikka" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Poulet Tikka<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Tendres morceaux de poulet marinés dans un mélange d’épices indiennes et grillés</div></div><div class="item-price">€9.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898766/qtcuhqegf0937urxbnq4.webp" alt="Mix Pakora" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Mix Pakora<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Assortiment de beignets dorés et croustillants d’aubergines, d’oignons et de pom</div></div><div class="item-price">€9.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898779/ovxmovdy6f7jf7dzp7lo.webp" alt="Raita" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Raita<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Sauce rafraîchissante au yaourt et au concombre, délicatement parfumée aux épice</div></div><div class="item-price">€6.50</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898790/mctxbyeszgkyv2vqhosk.webp" alt="Sheekh Kebab" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Sheekh Kebab<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Brochettes d’agneau haché délicatement assaisonnées à la coriandre, aux oignons,</div></div><div class="item-price">€6.50</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898792/r0rshkb5u9x4rdv2amd1.webp" alt="Poulet Tandoori" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Poulet Tandoori<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Cuisse de poulet marinée dans un mélange d’épices indiennes et grillée au tandoo</div></div><div class="item-price">€7.50</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898797/tlgl6jsba4opwtv0tv4y.webp" alt="Samosas Viande Hachée" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Samosas Viande Hachée<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Beignets dorés et croustillants garnis de viande hachée délicatement parfumée au</div></div><div class="item-price">€7.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898771/bd6dv2qnx0kiy6jpg1gl.webp" alt="Baingan Pakora" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Baingan Pakora<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Beignets d’aubergine dorés et croustillants à la farine de pois chiches, délicat</div></div><div class="item-price">€7.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898782/vcyncipuozwuk8xy4f09.webp" alt="Raita Crevettes" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Raita Crevettes<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Sauce fraîche au yaourt et aux crevettes, délicatement parfumée aux épices indie</div></div><div class="item-price">€8.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898795/re0hjvymo3qr9jxxv3jd.webp" alt="Assiette Grill" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Assiette Grill<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Assortiment de grillades tandoor composé de poulet tikka, agneau tikka et sheesh</div></div><div class="item-price">€12.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898773/dkjonqv3ffmky0a95xba.webp" alt="Oignon Bhaja" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Oignon Bhaja<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Beignets d’oignons dorés et croustillants, délicatement parfumés aux épices indi</div></div><div class="item-price">€7.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898775/w95nbgfgyfan6xtub4ig.webp" alt="Aloo Pakora" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Aloo Pakora<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Beignets de pommes de terre croustillants à la farine de pois chiches, délicatem</div></div><div class="item-price">€7.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898777/jjc78j2a93iyubjfm15h.webp" alt="Fish Pakora" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Fish Pakora<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Morceaux de poisson enrobés de farine de pois chiches et d’épices indiennes, fri</div></div><div class="item-price">€8.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898784/ekah7bcgovpaunt5tjkl.webp" alt="Gambas Tandoori" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Gambas Tandoori<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Savoureuses gambas marinées dans un mélange d’épices indiennes et grillées au ta</div></div><div class="item-price">€17.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898788/oiefmyctfmlfrtf6cxch.webp" alt="Agneau Tikka" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Agneau Tikka<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Tendres morceaux d’agneau marinés aux épices indiennes puis grillés au four tand</div></div><div class="item-price">€9.50</div></div></div><div class="category"><h3>Plats à l’Agneau (11)</h3><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898799/ad41mmiwhf6fmxrbkuid.webp" alt="Agneau Taj" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Agneau Taj<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Tendres morceaux d’agneau grillés puis mijotés dans une sauce onctueuse au curry</div></div><div class="item-price">€18.50</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898801/y7a12alhtsl8xojtesd9.webp" alt="Agneau Shahi Korma" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Agneau Shahi Korma<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Tendres morceaux d’agneau mijotés au beurre dans une sauce crémeuse aux amandes,</div></div><div class="item-price">€18.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898819/ry53oc9erbgumwl5lplt.webp" alt="Agneau Masala" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Agneau Masala<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Tendres morceaux d’agneau mijotés avec poivrons, tomates et oignons dans une sau</div></div><div class="item-price">€18.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898814/zkcq8vlfs7cftx3habpq.webp" alt="Agneau Vindaloo" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Agneau Vindaloo<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Tendres morceaux d’agneau mijotés dans une sauce vindaloo légèrement pimentée et</div></div><div class="item-price">€18.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898820/unptocjd5z6jptcfbqf9.webp" alt="Agneau Jalfrezi" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Agneau Jalfrezi<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Tendres morceaux d’agneau grillés puis mijotés dans une sauce curry relevée aux </div></div><div class="item-price">€18.50</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898804/wskunlwpykgu6xwc1zno.webp" alt="Agneau Rogan Gosht" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Agneau Rogan Gosht<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Tendres morceaux d’agneau mijotés dans une sauce curry riche aux amandes effilée</div></div><div class="item-price">€18.50</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898806/gtyf9tq3tbyrabxah4vk.webp" alt="Agneau Madras" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Agneau Madras<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Tendres morceaux d’agneau mijotés dans une sauce curry pimentée et parfumée aux </div></div><div class="item-price">€17.50</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898816/wfoaokrxifmvbpltpntl.webp" alt="Agneau Aloo Gosht" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Agneau Aloo Gosht<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Tendres morceaux d’agneau mijotés avec des pommes de terre dans une sauce curry </div></div><div class="item-price">€18.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898812/kgdtffv6pm3mvqmzpm2t.webp" alt="Agneau Palak" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Agneau Palak<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Tendres morceaux d’agneau mijotés avec des épinards hachés dans une sauce curry </div></div><div class="item-price">€18.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898808/t2vdr8dns4znuqmomn03.webp" alt="Agneau Dopiaza" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Agneau Dopiaza<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Tendres morceaux d’agneau mijotés avec des oignons dorés dans une sauce curry ri</div></div><div class="item-price">€17.50</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898810/ptw00ry3sjacmrw8fcei.webp" alt="Agneau Dal Gosht" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Agneau Dal Gosht<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Tendres morceaux d’agneau mijotés avec des lentilles dans une sauce curry riche </div></div><div class="item-price">€18.00</div></div></div><div class="category"><h3>Plats au Poulet (11)</h3><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898823/l0wkjdyh5ugo56kbacmd.webp" alt="Poulet Masala" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Poulet Masala<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Curry de poulet aux poivrons, tomates, oignons et épices indiennes, servi avec d</div></div><div class="item-price">€16.50</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898840/yj8kiuhadagj94coanps.webp" alt="Poulet Taj au Beurre" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Poulet Taj au Beurre<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Morceaux de poulet grillés puis cuisinés dans une sauce crémeuse au beurre, aux </div></div><div class="item-price">€17.50</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898827/qcwmrg7a9mzgonyxtyts.webp" alt="Poulet Madras" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Poulet Madras<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Poulet mijoté dans une sauce Madras épicée aux tomates, oignons et épices indien</div></div><div class="item-price">€16.50</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898837/tqam5i7tthnueuunzujb.webp" alt="Poulet Aloo" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Poulet Aloo<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Tendres morceaux de poulet cuisinés avec des pommes de terre dans une sauce curr</div></div><div class="item-price">€17.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898825/kvmbx1eouddwhplksmbb.webp" alt="Poulet Dopiaza" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Poulet Dopiaza<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Morceaux de poulet mijotés avec des oignons dans une sauce curry parfumée aux ép</div></div><div class="item-price">€16.50</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898829/pi5e7wsllyqipz52fmjh.webp" alt="Poulet Vindaloo" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Poulet Vindaloo<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Morceaux de poulet mijotés dans une sauce relevée aux épices indiennes et au vin</div></div><div class="item-price">€16.50</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898835/whlydbsdcjf4ycmovove.webp" alt="Poulet Dal" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Poulet Dal<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Tendres morceaux de poulet cuisinés avec des lentilles dans une sauce curry rich</div></div><div class="item-price">€17.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898842/flverffellbmq5w7allh.webp" alt="Poulet Jalfrezi" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Poulet Jalfrezi<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Tendres morceaux de poulet sautés avec poivrons, oignons et aromates frais dans </div></div><div class="item-price">€17.50</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898831/nryndmebqd7jmyootb99.webp" alt="Poulet Mughlai" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Poulet Mughlai<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Curry de poulet dans une sauce crémeuse aux œufs, parfumé aux épices indiennes, </div></div><div class="item-price">€17.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898833/vqkqmwzdqgcbzi4opeja.webp" alt="Poulet Palak" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Poulet Palak<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Curry de poulet cuisiné avec des épinards hachés et un mélange d’épices indienne</div></div><div class="item-price">€17.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898845/dqz55smx7chalkl2iubx.webp" alt="Poulet Shahi Korma" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Poulet Shahi Korma<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Tendres morceaux de poulet mijotés dans une sauce riche et crémeuse à base de cr</div></div><div class="item-price">€17.00</div></div></div><div class="category"><h3>Plats au Bœuf (5)</h3><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898847/q0zma9d6mwm75tsbodjp.webp" alt="Bœuf Masala" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Bœuf Masala<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Tendres morceaux de bœuf mijotés avec poivrons, tomates et oignons dans une sauc</div></div><div class="item-price">€16.50</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898849/wxbtz8rna4jyajaouuo9.webp" alt="Bœuf Vindaloo" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Bœuf Vindaloo<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Tendres morceaux de bœuf cuisinés dans une sauce vindaloo légèrement pimentée et</div></div><div class="item-price">€16.50</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898851/fzkgaw3bhqv6y7zt4ovy.webp" alt="Bœuf Kashmiri" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Bœuf Kashmiri<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Tendres morceaux de bœuf mijotés dans une sauce crémeuse aux amandes effilées et</div></div><div class="item-price">€16.50</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898856/rquvk9ey4oincba0etig.webp" alt="Bœuf Aloo" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Bœuf Aloo<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Tendres morceaux de bœuf cuisinés avec des pommes de terre dans une sauce curry </div></div><div class="item-price">€16.50</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898853/eqzamerfl6d2fqpburvm.webp" alt="Bœuf Madras" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Bœuf Madras<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Tendres morceaux de bœuf cuisinés dans une sauce curry relevée et parfumée aux é</div></div><div class="item-price">€16.50</div></div></div><div class="category"><h3>Plats aux Fruits de Mer (6)</h3><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898863/lxmdsmdnggjuebbygwyo.webp" alt="Crevettes Masala" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Crevettes Masala<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Délicieuses crevettes mijotées avec des aromates frais dans une sauce masala ric</div></div><div class="item-price">€18.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898861/d0rzgwfhheznm8gqinzl.webp" alt="Crevettes Madras" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Crevettes Madras<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Délicieuses crevettes cuisinées dans une sauce Madras relevée et parfumée aux ép</div></div><div class="item-price">€18.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898858/xst1iqtoeuhavq9fjokv.webp" alt="Crevettes Malai" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Crevettes Malai<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Délicieuses crevettes décortiquées cuisinées dans une sauce crémeuse au beurre, </div></div><div class="item-price">€18.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898865/f1d2qzposycaseyodnny.webp" alt="Gambas Malai" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Gambas Malai<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Savoureuses gambas cuisinées dans une sauce crémeuse au beurre, aux amandes effi</div></div><div class="item-price">€19.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898868/iomj388xnvkqxo5qhkyh.webp" alt="Gambas Masala" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Gambas Masala<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Savoureuses gambas mijotées avec des aromates frais dans une sauce masala riche </div></div><div class="item-price">€19.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898869/jezcf1bgrzbg9ld1gxir.webp" alt="Gambas Madras" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Gambas Madras<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Savoureuses gambas cuisinées dans une sauce Madras relevée et parfumée aux épice</div></div><div class="item-price">€19.00</div></div></div><div class="category"><h3>Plats Végétariens (6)</h3><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898883/xjlyx0sep3rrov96vrma.webp" alt="Palak Paneer" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Palak Paneer<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Morceaux de paneer mijotés dans une sauce onctueuse d’épinards, délicatement par</div></div><div class="item-price">€13.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898872/rg4rph6hjkafcp0azfod.webp" alt="Baingan Bharta" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Baingan Bharta<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Aubergines grillées et écrasées mijotées dans une sauce parfumée aux épices indi</div></div><div class="item-price">€13.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898878/ky6yjxxjidrcjhzqyskj.webp" alt="Curry de Légumes" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Curry de Légumes<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Assortiment de légumes frais (petits pois, carottes, chou-fleur, haricots et cou</div></div><div class="item-price">€12.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898874/gxvl1bxiqltavi1kagjh.webp" alt="Dal Curry" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Dal Curry<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Lentilles mijotées dans une sauce onctueuse au beurre et aux épices indiennes tr</div></div><div class="item-price">€13.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898880/ws3rddfaipp4wbxpfnbl.webp" alt="Légumes Korma" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Légumes Korma<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Assortiment de légumes frais cuisinés dans une sauce crémeuse aux amandes et à l</div></div><div class="item-price">€13.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898876/botzzlsp6uodckqa37nm.webp" alt="Aloo Palak" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Aloo Palak<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Épinards finement hachés mijotés avec des pommes de terre dans une sauce parfumé</div></div><div class="item-price">€13.00</div></div></div><div class="category"><h3>Naan & Pains Indiens (5)</h3><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898900/w363wvntfakdlugkcu5w.webp" alt="Naan au fromage" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Naan au fromage<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Pain indien moelleux garni de fromage fondant et cuit au four tandoor pour une s</div></div><div class="item-price">€4.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898902/lgvalgj8o61oqg2xlhnf.webp" alt="Naan" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Naan<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Pain indien traditionnel, moelleux et légèrement doré, cuit au four tandoor.</div></div><div class="item-price">€2.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898907/kqyzvubsxfxoaccuaham.webp" alt="Garlic Naan" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Garlic Naan<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Pain indien parfumé à l’ail et légèrement beurré, cuit au four tandoor.</div></div><div class="item-price">€4.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898910/aznldtqjtyrzpwabxusu.webp" alt="Naan Fromage au Piment Vert" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Naan Fromage au Piment Vert<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Pain indien traditionnel garni de fromage fondant et de piment vert légèrement r</div></div><div class="item-price">€4.50</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898905/kvua4d4d0sjkhdhzaax3.webp" alt="Paratha" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Paratha<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Pain indien feuilleté et légèrement croustillant, doré à la poêle pour une textu</div></div><div class="item-price">€2.00</div></div></div><div class="category"><h3>Desserts Indiens (1)</h3><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898912/qrdiyunejhz5ymz54gkx.webp" alt="Halwa" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Halwa<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Dessert traditionnel maison à base de semoule de blé, aux amandes et à la noix d</div></div><div class="item-price">€6.00</div></div></div><div class="category"><h3>Boissons (7)</h3><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898914/ft1uwutpi4rwja2qdv56.webp" alt="Coca‑Cola 33 cl" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Coca‑Cola 33 cl<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Boisson gazeuse rafraîchissante.</div></div><div class="item-price">€3.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898916/tlehn32vmbccnlznw4jn.webp" alt="Coca-Cola – 1,25 L" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Coca-Cola – 1,25 L<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Boisson gazeuse rafraîchissante au goût unique de cola, idéale à partager. Servi</div></div><div class="item-price">€5.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898918/ftczovlotnjpgm1qjcux.webp" alt="Coca-Cola Cherry – 33 cl" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Coca-Cola Cherry – 33 cl<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Boisson gazeuse rafraîchissante au goût unique de cola avec une délicieuse saveu</div></div><div class="item-price">€3.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898920/wzrixcfixdv7db3osczz.webp" alt="Fanta Orange – 33 cl" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Fanta Orange – 33 cl<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Boisson gazeuse rafraîchissante au délicieux goût d’orange, pétillante et fruité</div></div><div class="item-price">€3.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898922/qpgiyahobsnzam53d19e.webp" alt="Fanta Citron – 33 cl" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Fanta Citron – 33 cl<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Boisson gazeuse rafraîchissante au goût intense de citron, pétillante et légèrem</div></div><div class="item-price">€3.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898925/xngk0mjtnl414tqbzjhn.webp" alt="Sprite – 33 cl" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Sprite – 33 cl<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Boisson gazeuse rafraîchissante au goût citron-citron vert, légère et pétillante</div></div><div class="item-price">€3.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898927/aqulmwtstwb9ggxshzve.webp" alt="Perrier 33 cl – 33 cl" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Perrier 33 cl – 33 cl<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Eau minérale naturelle pétillante aux fines bulles, rafraîchissante et légère. S</div></div><div class="item-price">€3.00</div></div></div><div class="category"><h3>Spécialités du Chef (1)</h3><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898931/zurkdf3jomo7zxgo5pk8.webp" alt="Poulet Biryani" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Poulet Biryani<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Riz basmati parfumé cuisiné avec des morceaux de poulet et un mélange d’épices i</div></div><div class="item-price">€18.00</div></div></div><div class="category"><h3>Biryanis (6)</h3><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898886/r5rdifjn2buah185m8mj.webp" alt="Agneau Biryani" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Agneau Biryani<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Riz basmati parfumé cuisiné avec de tendres morceaux d’agneau et un mélange d’ép</div></div><div class="item-price">€18.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898888/rnr7auhywev190bqjt71.webp" alt="Bœuf Biryani" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Bœuf Biryani<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Riz basmati parfumé mijoté avec de tendres morceaux de bœuf et un mélange d’épic</div></div><div class="item-price">€18.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898891/shdmobv3paewcfkicv01.webp" alt="Crevettes Biryani" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Crevettes Biryani<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Riz basmati parfumé mijoté avec de tendres crevettes et un mélange d’épices indi</div></div><div class="item-price">€18.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898893/cyifafcut73jh6dwxeri.webp" alt="Gambas Biryani" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Gambas Biryani<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Riz basmati parfumé mijoté avec de savoureuses gambas et un mélange d’épices ind</div></div><div class="item-price">€19.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898895/pzwgeoxekswrlmdj81ja.webp" alt="Légumes Biryani" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Légumes Biryani<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Riz basmati parfumé mijoté avec un mélange de légumes frais et d’épices indienne</div></div><div class="item-price">€15.00</div></div><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898897/nrpliebwgoxwbzxwxh4z.webp" alt="Mixte Biryani" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Mixte Biryani<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Riz basmati parfumé cuisiné avec crevettes, agneau, poulet et légumes, délicatem</div></div><div class="item-price">€20.00</div></div></div><div class="category"><h3>Accompagnements (1)</h3><div class="item"><img src="https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898929/q9xdekiyxzkrpr8dpcq9.webp" alt="Riz Basmati" onerror="this.style.background='#4a2a2a'" /><div class="item-info"><div class="item-name">Riz Basmati<span class="badge badge-original">ORIGINAL</span></div><div class="item-desc">Riz basmati parfumé, aux grains longs et délicats, idéal pour accompagner les sp</div></div><div class="item-price">€4.00</div></div></div>
+  </div>
+</div>
+
+<script>
 const firebaseConfig = {
-  apiKey: "AIzaSyDTgv9mpcXTOK5m2nCXgLunCT27tZ0Gj-I",
+  apiKey: "AIzaSyBVnYkpA4W7GEXF8VmwQ_vMdnDYHCDf8Oc",
   authDomain: "tajmahal-orders.firebaseapp.com",
   projectId: "tajmahal-orders",
   storageBucket: "tajmahal-orders.firebasestorage.app",
-  messagingSenderId: "347604539540",
-  appId: "1:347604539540:web:78fc0e40fa8fee5bca63c8"
+  messagingSenderId: "839358429867",
+  appId: "1:839358429867:web:1e6c1f4e3ec9e4e4e2f1d2"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-const MENU_DATA = [
-  {
-    "name": "Cheese Naan Kebab",
-    "price": 15.0,
-    "description": "",
-    "category": "Nouveautés",
-    "badge": "new",
-    "image": ""
-  },
-  {
-    "name": "Cheese Naan Tikka",
-    "price": 15.0,
-    "description": "",
-    "category": "Nouveautés",
-    "badge": "new",
-    "image": ""
-  },
-  {
-    "name": "Brochette Tikka",
-    "price": 12.0,
-    "description": "",
-    "category": "Nouveautés",
-    "badge": "new",
-    "image": ""
-  },
-  {
-    "name": "Brochette Sheekh Kebab",
-    "price": 12.0,
-    "description": "",
-    "category": "Nouveautés",
-    "badge": "new",
-    "image": ""
-  },
-  {
-    "name": "Brochette d’Agneau",
-    "price": 13.0,
-    "description": "",
-    "category": "Nouveautés",
-    "badge": "new",
-    "image": ""
-  },
-  {
-    "name": "Mix Pakora",
-    "price": 9.0,
-    "description": "",
-    "category": "Entrées & Spécialités Tandoor",
-    "badge": "chef",
-    "image": ""
-  },
-  {
-    "name": "Mixte Grill",
-    "price": 24.0,
-    "description": "",
-    "category": "Entrées & Spécialités Tandoor",
-    "badge": "chef",
-    "image": ""
-  },
-  {
-    "name": "Baingan Pakora",
-    "price": 7.0,
-    "description": "",
-    "category": "Entrées & Spécialités Tandoor",
-    "badge": "chef",
-    "image": ""
-  },
-  {
-    "name": "Oignon Bhaja",
-    "price": 7.0,
-    "description": "",
-    "category": "Entrées & Spécialités Tandoor",
-    "badge": "chef",
-    "image": ""
-  },
-  {
-    "name": "Aloo Pakora",
-    "price": 7.0,
-    "description": "",
-    "category": "Entrées & Spécialités Tandoor",
-    "badge": "chef",
-    "image": ""
-  },
-  {
-    "name": "Fish Pakora",
-    "price": 8.0,
-    "description": "",
-    "category": "Entrées & Spécialités Tandoor",
-    "badge": "chef",
-    "image": ""
-  },
-  {
-    "name": "Raita",
-    "price": 6.5,
-    "description": "",
-    "category": "Entrées & Spécialités Tandoor",
-    "badge": "chef",
-    "image": ""
-  },
-  {
-    "name": "Raita Crevettes",
-    "price": 8.0,
-    "description": "",
-    "category": "Entrées & Spécialités Tandoor",
-    "badge": "chef",
-    "image": ""
-  },
-  {
-    "name": "Gambas Tandoori",
-    "price": 17.0,
-    "description": "",
-    "category": "Entrées & Spécialités Tandoor",
-    "badge": "chef",
-    "image": ""
-  },
-  {
-    "name": "Poulet Tikka",
-    "price": 9.0,
-    "description": "",
-    "category": "Entrées & Spécialités Tandoor",
-    "badge": "chef",
-    "image": ""
-  },
-  {
-    "name": "Agneau Tikka",
-    "price": 9.5,
-    "description": "",
-    "category": "Entrées & Spécialités Tandoor",
-    "badge": "chef",
-    "image": ""
-  },
-  {
-    "name": "Sheekh Kebab",
-    "price": 6.5,
-    "description": "",
-    "category": "Entrées & Spécialités Tandoor",
-    "badge": "chef",
-    "image": ""
-  },
-  {
-    "name": "Poulet Tandoori",
-    "price": 7.5,
-    "description": "",
-    "category": "Entrées & Spécialités Tandoor",
-    "badge": "chef",
-    "image": ""
-  },
-  {
-    "name": "Assiette Grill",
-    "price": 12.0,
-    "description": "",
-    "category": "Entrées & Spécialités Tandoor",
-    "badge": "chef",
-    "image": ""
-  },
-  {
-    "name": "Samosas Viande Hachée",
-    "price": 7.0,
-    "description": "",
-    "category": "Entrées & Spécialités Tandoor",
-    "badge": "chef",
-    "image": ""
-  },
-  {
-    "name": "Mixt Poulet Tikka",
-    "price": 9.0,
-    "description": "Assortiment de blancs de poulet marinés, grillés au Tandoor",
-    "category": "Entrées & Spécialités Tandoor",
-    "badge": "chef",
-    "image": ""
-  },
-  {
-    "name": "Reshmi Tikka",
-    "price": 8.9,
-    "description": "Poulet mariné crème, cajou, coriandre, piment vert — Tandoor",
-    "category": "Entrées & Spécialités Tandoor",
-    "badge": "chef",
-    "image": ""
-  },
-  {
-    "name": "Sheesh Kebab",
-    "price": 6.0,
-    "description": "Agneau haché en brochettes, coriandre, oignons, gingembre",
-    "category": "Entrées & Spécialités Tandoor",
-    "badge": "chef",
-    "image": ""
-  },
-  {
-    "name": "Poulet Pakora",
-    "price": 8.9,
-    "description": "Beignet de poulet mariné",
-    "category": "Entrées & Spécialités Tandoor",
-    "badge": "chef",
-    "image": ""
-  },
-  {
-    "name": "Prawn Pakora",
-    "price": 8.9,
-    "description": "Beignet de crevettes marinées",
-    "category": "Entrées & Spécialités Tandoor",
-    "badge": "chef",
-    "image": ""
-  },
-  {
-    "name": "Mixt Grill (1 pers.)",
-    "price": 13.0,
-    "description": "Assortiment de poulet, brochette de viande hachée et pilon",
-    "category": "Entrées & Spécialités Tandoor",
-    "badge": "chef",
-    "image": ""
-  },
-  {
-    "name": "Mixt Grill (2 pers.)",
-    "price": 24.0,
-    "description": "Assortiment de grillades et de beignets pour deux",
-    "category": "Entrées & Spécialités Tandoor",
-    "badge": "chef",
-    "image": ""
-  },
-  {
-    "name": "Samossa Légumes",
-    "price": 6.0,
-    "description": "Samossas aux légumes frits, croustillants",
-    "category": "Entrées & Spécialités Tandoor",
-    "badge": "chef",
-    "image": ""
-  },
-  {
-    "name": "Samossa Viande",
-    "price": 7.0,
-    "description": "Samossas à la viande hachée",
-    "category": "Entrées & Spécialités Tandoor",
-    "badge": "chef",
-    "image": ""
-  },
-  {
-    "name": "Agneau Taj",
-    "price": 18.5,
-    "description": "",
-    "category": "Plats à l'Agneau",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Agneau Shahi Korma",
-    "price": 18.0,
-    "description": "",
-    "category": "Plats à l'Agneau",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Agneau Rogan Gosht",
-    "price": 18.5,
-    "description": "",
-    "category": "Plats à l'Agneau",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Agneau Madras",
-    "price": 17.5,
-    "description": "",
-    "category": "Plats à l'Agneau",
-    "badge": "spicy",
-    "image": ""
-  },
-  {
-    "name": "Agneau Dopiaza",
-    "price": 17.5,
-    "description": "",
-    "category": "Plats à l'Agneau",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Agneau Dal Gosht",
-    "price": 18.0,
-    "description": "",
-    "category": "Plats à l'Agneau",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Agneau Palak",
-    "price": 18.0,
-    "description": "",
-    "category": "Plats à l'Agneau",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Agneau Vindaloo",
-    "price": 18.0,
-    "description": "",
-    "category": "Plats à l'Agneau",
-    "badge": "spicy",
-    "image": ""
-  },
-  {
-    "name": "Agneau Aloo Gosht",
-    "price": 18.0,
-    "description": "",
-    "category": "Plats à l'Agneau",
-    "badge": "spicy",
-    "image": ""
-  },
-  {
-    "name": "Agneau Masala",
-    "price": 18.0,
-    "description": "",
-    "category": "Plats à l'Agneau",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Agneau Jalfrezi",
-    "price": 18.5,
-    "description": "",
-    "category": "Plats à l'Agneau",
-    "badge": "spicy",
-    "image": ""
-  },
-  {
-    "name": "Agneau Jall Frezi",
-    "price": 17.0,
-    "description": "Agneau grillé puis mariné au curry avec des aromates frais",
-    "category": "Plats à l'Agneau",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Poulet Masala",
-    "price": 16.5,
-    "description": "",
-    "category": "Plats au Poulet",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Poulet Dopiaza",
-    "price": 16.5,
-    "description": "",
-    "category": "Plats au Poulet",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Poulet Madras",
-    "price": 16.5,
-    "description": "",
-    "category": "Plats au Poulet",
-    "badge": "spicy",
-    "image": ""
-  },
-  {
-    "name": "Poulet Vindaloo",
-    "price": 16.5,
-    "description": "",
-    "category": "Plats au Poulet",
-    "badge": "spicy",
-    "image": ""
-  },
-  {
-    "name": "Poulet Mughlai",
-    "price": 17.0,
-    "description": "",
-    "category": "Plats au Poulet",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Poulet Palak",
-    "price": 17.0,
-    "description": "",
-    "category": "Plats au Poulet",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Poulet Dal",
-    "price": 17.0,
-    "description": "",
-    "category": "Plats au Poulet",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Poulet Aloo",
-    "price": 17.0,
-    "description": "",
-    "category": "Plats au Poulet",
-    "badge": "spicy",
-    "image": ""
-  },
-  {
-    "name": "Poulet Taj au Beurre",
-    "price": 17.5,
-    "description": "",
-    "category": "Plats au Poulet",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Poulet Jalfrezi",
-    "price": 17.5,
-    "description": "",
-    "category": "Plats au Poulet",
-    "badge": "spicy",
-    "image": ""
-  },
-  {
-    "name": "Poulet Shahi Korma",
-    "price": 17.0,
-    "description": "",
-    "category": "Plats au Poulet",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Poulet Massala",
-    "price": 15.0,
-    "description": "Curry de poulet avec poivrons, tomates, oignons et épices",
-    "category": "Plats au Poulet",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Poulet Shai Korma",
-    "price": 16.0,
-    "description": "Curry de poulet, sauce crème, amandes, coco, beurre",
-    "category": "Plats au Poulet",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Poulet Jall Frezi",
-    "price": 16.0,
-    "description": "Poulet grillé au charbon, mariné au curry, oignons, poivrons",
-    "category": "Plats au Poulet",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Bœuf Masala",
-    "price": 16.5,
-    "description": "",
-    "category": "Plats au Bœuf",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Bœuf Vindaloo",
-    "price": 16.5,
-    "description": "",
-    "category": "Plats au Bœuf",
-    "badge": "spicy",
-    "image": ""
-  },
-  {
-    "name": "Bœuf Kashmiri",
-    "price": 16.5,
-    "description": "",
-    "category": "Plats au Bœuf",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Bœuf Madras",
-    "price": 16.5,
-    "description": "",
-    "category": "Plats au Bœuf",
-    "badge": "spicy",
-    "image": ""
-  },
-  {
-    "name": "Bœuf Aloo",
-    "price": 16.5,
-    "description": "",
-    "category": "Plats au Bœuf",
-    "badge": "spicy",
-    "image": ""
-  },
-  {
-    "name": "Boeuf Massala",
-    "price": 16.0,
-    "description": "Boeuf avec poivrons, tomates, oignons et épices",
-    "category": "Plats au Bœuf",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Boeuf Vindaloo",
-    "price": 16.0,
-    "description": "Boeuf à la sauce moyennement relevée",
-    "category": "Plats au Bœuf",
-    "badge": "spicy",
-    "image": ""
-  },
-  {
-    "name": "Boeuf Madras",
-    "price": 16.0,
-    "description": "Boeuf à la sauce pimentée",
-    "category": "Plats au Bœuf",
-    "badge": "spicy",
-    "image": ""
-  },
-  {
-    "name": "Crevettes Malai",
-    "price": 18.0,
-    "description": "",
-    "category": "Plats aux Fruits de Mer",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Crevettes Madras",
-    "price": 18.0,
-    "description": "",
-    "category": "Plats aux Fruits de Mer",
-    "badge": "spicy",
-    "image": ""
-  },
-  {
-    "name": "Crevettes Masala",
-    "price": 18.0,
-    "description": "",
-    "category": "Plats aux Fruits de Mer",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Gambas Malai",
-    "price": 19.0,
-    "description": "",
-    "category": "Plats aux Fruits de Mer",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Gambas Masala",
-    "price": 19.0,
-    "description": "",
-    "category": "Plats aux Fruits de Mer",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Gambas Madras",
-    "price": 19.0,
-    "description": "",
-    "category": "Plats aux Fruits de Mer",
-    "badge": "spicy",
-    "image": ""
-  },
-  {
-    "name": "Crevettes Massala",
-    "price": 17.0,
-    "description": "Curry de crevettes avec des aromates frais",
-    "category": "Plats aux Fruits de Mer",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Gambas Massala",
-    "price": 18.0,
-    "description": "Curry de gambas avec des aromates frais et épices",
-    "category": "Plats aux Fruits de Mer",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Prawn Fried Rice",
-    "price": 15.0,
-    "description": "Riz sauté aux crevettes",
-    "category": "Plats aux Fruits de Mer",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Prawn Noodles",
-    "price": 15.0,
-    "description": "Nouilles sautées aux crevettes",
-    "category": "Plats aux Fruits de Mer",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Prawn Chili",
-    "price": 15.9,
-    "description": "Crevettes marinées aux épices chinoises, sauce soja",
-    "category": "Plats aux Fruits de Mer",
-    "badge": "spicy",
-    "image": ""
-  },
-  {
-    "name": "Prawn Manchurian",
-    "price": 16.9,
-    "description": "Crevettes sautées coriandre, gingembre en sauce chinoise",
-    "category": "Plats aux Fruits de Mer",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Baingan Bharta",
-    "price": 13.0,
-    "description": "",
-    "category": "Plats Végétariens",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Dal Curry",
-    "price": 13.0,
-    "description": "",
-    "category": "Plats Végétariens",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Aloo Palak",
-    "price": 13.0,
-    "description": "",
-    "category": "Plats Végétariens",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Curry de Légumes",
-    "price": 12.0,
-    "description": "",
-    "category": "Plats Végétariens",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Légumes Korma",
-    "price": 13.0,
-    "description": "",
-    "category": "Plats Végétariens",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Palak Paneer",
-    "price": 13.0,
-    "description": "",
-    "category": "Plats Végétariens",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Dahl",
-    "price": 12.0,
-    "description": "Curry de lentilles au beurre",
-    "category": "Plats Végétariens",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Agneau Biryani",
-    "price": 18.0,
-    "description": "",
-    "category": "Biryanis",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Bœuf Biryani",
-    "price": 18.0,
-    "description": "",
-    "category": "Biryanis",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Crevettes Biryani",
-    "price": 18.0,
-    "description": "",
-    "category": "Biryanis",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Gambas Biryani",
-    "price": 19.0,
-    "description": "",
-    "category": "Biryanis",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Légumes Biryani",
-    "price": 15.0,
-    "description": "",
-    "category": "Biryanis",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Mixte Biryani",
-    "price": 20.0,
-    "description": "",
-    "category": "Biryanis",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Poulet Briani",
-    "price": 17.0,
-    "description": "Poulet mijoté au riz avec épices",
-    "category": "Biryanis",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Agneau Briani",
-    "price": 17.0,
-    "description": "Agneau mijoté au riz avec épices",
-    "category": "Biryanis",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Boeuf Briani",
-    "price": 17.0,
-    "description": "Boeuf mijoté au riz avec épices",
-    "category": "Biryanis",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Crevettes Briani",
-    "price": 17.0,
-    "description": "Crevettes mijotées au riz avec épices",
-    "category": "Biryanis",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Gambas Briani",
-    "price": 18.0,
-    "description": "Gambas mijotées au riz avec épices",
-    "category": "Biryanis",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Légumes Briani",
-    "price": 14.0,
-    "description": "Légumes mijotés au riz avec épices",
-    "category": "Biryanis",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Mixt Briani",
-    "price": 19.0,
-    "description": "Crevettes, agneau, poulet, légumes mijotés au riz",
-    "category": "Biryanis",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Spring Rolls Chicken",
-    "price": 8.9,
-    "description": "Nems au poulet, croustillants et dorés",
-    "category": "Indo-Asiatique",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Spring Rolls Veg",
-    "price": 7.9,
-    "description": "Nems aux légumes, croustillants et dorés",
-    "category": "Indo-Asiatique",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Chicken Soup",
-    "price": 8.0,
-    "description": "Bouillon de poulet aux légumes et épices",
-    "category": "Indo-Asiatique",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Chicken Fried Rice",
-    "price": 14.0,
-    "description": "Riz sauté au poulet",
-    "category": "Indo-Asiatique",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Chicken Noodles",
-    "price": 14.0,
-    "description": "Nouilles sautées au poulet",
-    "category": "Indo-Asiatique",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Vegetable Noodles",
-    "price": 13.9,
-    "description": "Nouilles sautées aux légumes",
-    "category": "Indo-Asiatique",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Chicken Chili",
-    "price": 15.9,
-    "description": "Poulet mariné aux épices chinoises, poivron, sauce soja",
-    "category": "Indo-Asiatique",
-    "badge": "spicy",
-    "image": ""
-  },
-  {
-    "name": "Beef Chili",
-    "price": 15.9,
-    "description": "Boeuf mariné aux épices chinoises, poivron, sauce soja",
-    "category": "Indo-Asiatique",
-    "badge": "spicy",
-    "image": ""
-  },
-  {
-    "name": "Honey Chilli Potatoes",
-    "price": 13.9,
-    "description": "Pommes de terre aux épices chinoises, poivron, sauce soja",
-    "category": "Indo-Asiatique",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Chicken Manchurian",
-    "price": 15.9,
-    "description": "Poulet sauté coriandre, gingembre, ail en sauce chinoise",
-    "category": "Indo-Asiatique",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Veg Manchurian",
-    "price": 13.9,
-    "description": "Légumes de saison coriandre, gingembre en sauce chinoise",
-    "category": "Indo-Asiatique",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Naan au fromage",
-    "price": 4.0,
-    "description": "",
-    "category": "Naan & Pains Indiens",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Naan",
-    "price": 2.0,
-    "description": "",
-    "category": "Naan & Pains Indiens",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Paratha",
-    "price": 2.0,
-    "description": "",
-    "category": "Naan & Pains Indiens",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Garlic Naan",
-    "price": 4.0,
-    "description": "",
-    "category": "Naan & Pains Indiens",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Naan Fromage au Piment Vert",
-    "price": 4.5,
-    "description": "",
-    "category": "Naan & Pains Indiens",
-    "badge": "spicy",
-    "image": ""
-  },
-  {
-    "name": "Sandwich Naan Fromage",
-    "price": 1.0,
-    "description": "Avec frites · Midi sur place, soir à emporter",
-    "category": "Naan & Pains Indiens",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Naan Nature",
-    "price": 2.0,
-    "description": "Pâte à pain levée, nature",
-    "category": "Naan & Pains Indiens",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Naan Fromage Piment Vert",
-    "price": 4.0,
-    "description": "Naan fromage au piment vert",
-    "category": "Naan & Pains Indiens",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Formule Déjeuner",
-    "price": 15.0,
-    "description": "Uniquement le midi · Riz basmati et naan fromage inclus",
-    "category": "Nos Menus",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Menu Taj Mahal",
-    "price": 26.9,
-    "description": "À volonté dim. soir → ven. midi · 1 Naan inclus",
-    "category": "Nos Menus",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Menu 24,50€",
-    "price": 24.0,
-    "description": "Entrée + Plat + Dessert au choix",
-    "category": "Nos Menus",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Menu 29,50€",
-    "price": 29.0,
-    "description": "Entrée + Plat premium + Dessert au choix",
-    "category": "Nos Menus",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Assiette Brochettes",
-    "price": 1.0,
-    "description": "Avec frites et riz sauté ou pois chiche",
-    "category": "Nos Menus",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Halwa",
-    "price": 6.0,
-    "description": "",
-    "category": "Desserts Indiens",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Kulfi",
-    "price": 6.0,
-    "description": "Glace indienne à la pistache et amandes",
-    "category": "Desserts Indiens",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Coupe Taj",
-    "price": 6.0,
-    "description": "Glace vanille et gâteau maison, amandes, coco",
-    "category": "Desserts Indiens",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Glace 2 Parfums",
-    "price": 6.0,
-    "description": "Vanille, Pistache, Caramel au choix",
-    "category": "Desserts Indiens",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Fondant Chocolat",
-    "price": 7.0,
-    "description": "Fondant au chocolat avec boule de glace vanille",
-    "category": "Desserts Indiens",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Nougat Glacé",
-    "price": 7.0,
-    "description": "Nougat glacé maison",
-    "category": "Desserts Indiens",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Vacherin",
-    "price": 7.0,
-    "description": "Vanille et Framboise",
-    "category": "Desserts Indiens",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Coco Givré",
-    "price": 7.0,
-    "description": "Sorbet noix de coco",
-    "category": "Desserts Indiens",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Colonel",
-    "price": 8.0,
-    "description": "Sorbet citron vert arrosé de vodka",
-    "category": "Desserts Indiens",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Coupe Poire",
-    "price": 8.0,
-    "description": "Sorbet poire arrosé de Poire Williams",
-    "category": "Desserts Indiens",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Coupe Iceberg",
-    "price": 8.0,
-    "description": "Glace menthe arrosée de Get 27",
-    "category": "Desserts Indiens",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Coca‑Cola 33 cl",
-    "price": 3.0,
-    "description": "",
-    "category": "Boissons",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Coca-Cola – 1,25 L",
-    "price": 5.0,
-    "description": "",
-    "category": "Boissons",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Coca-Cola Cherry – 33 cl",
-    "price": 3.0,
-    "description": "",
-    "category": "Boissons",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Fanta Orange – 33 cl",
-    "price": 3.0,
-    "description": "",
-    "category": "Boissons",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Fanta Citron – 33 cl",
-    "price": 3.0,
-    "description": "",
-    "category": "Boissons",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Sprite – 33 cl",
-    "price": 3.0,
-    "description": "",
-    "category": "Boissons",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Perrier 33 cl – 33 cl",
-    "price": 3.0,
-    "description": "",
-    "category": "Boissons",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Limonade",
-    "price": 3.0,
-    "description": "Limonade fraîche maison",
-    "category": "Boissons",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Orangina / Ice Tea",
-    "price": 3.0,
-    "description": "Orangina ou Ice Tea",
-    "category": "Boissons",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Diabolo",
-    "price": 3.0,
-    "description": "Diabolo menthe ou grenadine",
-    "category": "Boissons",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Evian 50cl",
-    "price": 5.0,
-    "description": "Eau minérale naturelle",
-    "category": "Boissons",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Evian 25cl",
-    "price": 4.0,
-    "description": "Eau minérale naturelle demi",
-    "category": "Boissons",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Badoit 50cl",
-    "price": 5.0,
-    "description": "Eau gazeuse Badoit",
-    "category": "Boissons",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Heineken",
-    "price": 4.0,
-    "description": "Bière Heineken",
-    "category": "Boissons",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Bière Indienne",
-    "price": 5.0,
-    "description": "Bière indienne importée",
-    "category": "Boissons",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Lassi Mangue",
-    "price": 4.0,
-    "description": "Lassi à la mangue fraîche",
-    "category": "Boissons",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Lassi Sucré",
-    "price": 3.0,
-    "description": "Lassi sucré traditionnel",
-    "category": "Boissons",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Lassi Salé",
-    "price": 3.0,
-    "description": "Lassi salé",
-    "category": "Boissons",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Lassi Nature",
-    "price": 3.0,
-    "description": "Lassi nature",
-    "category": "Boissons",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Thé Indien au Lait",
-    "price": 4.0,
-    "description": "Thé indien traditionnel au lait",
-    "category": "Boissons",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Thé Cardamone & Cannelle",
-    "price": 4.0,
-    "description": "Thé aux épices douces",
-    "category": "Boissons",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Thé à la Menthe",
-    "price": 4.0,
-    "description": "Thé à la menthe fraîche",
-    "category": "Boissons",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Café",
-    "price": 1.7,
-    "description": "Café expresso",
-    "category": "Boissons",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Café Crème",
-    "price": 2.0,
-    "description": "Café avec crème",
-    "category": "Boissons",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Mojito",
-    "price": 6.0,
-    "description": "Rhum, citron vert, menthe fraîche, eau pétillante",
-    "category": "Boissons",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Sex On The Beach",
-    "price": 6.0,
-    "description": "Vodka, mangue, passion et pêche blanche",
-    "category": "Boissons",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Virgin Mojito",
-    "price": 6.0,
-    "description": "Sans alcool: citron vert, menthe, eau pétillante",
-    "category": "Boissons",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Coupe de Champagne",
-    "price": 9.0,
-    "description": "Coupe de champagne",
-    "category": "Boissons",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Riz Basmati",
-    "price": 4.0,
-    "description": "",
-    "category": "Accompagnements",
-    "badge": "",
-    "image": ""
-  },
-  {
-    "name": "Riz au Curry",
-    "price": 5.0,
-    "description": "Riz basmati au curry",
-    "category": "Accompagnements",
-    "badge": "veg",
-    "image": ""
-  },
-  {
-    "name": "Poulet Biryani",
-    "price": 18.0,
-    "description": "",
-    "category": "Spécialités du Chef",
-    "badge": "chef",
-    "image": ""
-  }
-];
+const menuItems = [{"id":"item_1","name":"Cheese Naan Tikka","description":"Morceaux de poulet tikka grillés au tandoor, enveloppés dans un naan au fromage fondant. Servis sur un lit de poivrons frits, tomates et galette de pomme de terre, accompagnés de frites croustillantes","price":15,"category":"Nouveautés","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898757/n90v7nncweln28h8cmci.webp","imageSource":"cloudinary","available":true},{"id":"item_2","name":"Cheese Naan Kebab","description":"Viande hachée marinée aux oignons et à la coriandre, enveloppée dans un naan au fromage fondant. Servie sur un lit de poivrons frits, tomates et galette de pomme de terre, accompagnée de frites croustillantes.","price":15,"category":"Nouveautés","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898756/akznif7hkrqushbwbayj.webp","imageSource":"cloudinary","available":true},{"id":"item_3","name":"Brochette Sheekh Kebab","description":"Brochette de viande hachée parfumée aux épices indiennes et grillée au tandoor pour une saveur authentique. Servie avec salade fraîche et frites croustillantes.","price":12,"category":"Nouveautés","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898762/qd2knxcrclhfujn533no.webp","imageSource":"cloudinary","available":true},{"id":"item_4","name":"Brochette d’Agneau","description":"Morceaux d’agneau marinés aux épices indiennes et grillés au tandoor pour une saveur authentique. Servis avec salade fraîche et frites croustillantes.","price":13,"category":"Nouveautés","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898764/wrmwiwoup51hzoewkmwk.webp","imageSource":"cloudinary","available":true},{"id":"item_5","name":"Brochette Tikka","description":"Brochette de viande marinée aux épices indiennes, grillée au tandoor pour une saveur authentique. Servie avec salade fraîche et frites croustillantes.","price":12,"category":"Nouveautés","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898760/p16tlpobswxiivsuagzw.webp","imageSource":"cloudinary","available":true},{"id":"item_6","name":"Mixte Grill","description":"Assortiment de grillades tandoor et de beignets croustillants aux épices indiennes. Parfait à partager pour 2 personnes.","price":24,"category":"Entrées & Spécialités Tandoor","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898769/izhuuzromn7svaqjutf2.webp","imageSource":"cloudinary","available":true},{"id":"item_7","name":"Poulet Tikka","description":"Tendres morceaux de poulet marinés dans un mélange d’épices indiennes et grillés au tandoor pour une saveur authentique.","price":9,"category":"Entrées & Spécialités Tandoor","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898786/mase1ryompskgykozvg0.webp","imageSource":"cloudinary","available":true},{"id":"item_8","name":"Mix Pakora","description":"Assortiment de beignets dorés et croustillants d’aubergines, d’oignons et de pommes de terre, délicatement parfumés aux épices indiennes.","price":9,"category":"Entrées & Spécialités Tandoor","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898766/qtcuhqegf0937urxbnq4.webp","imageSource":"cloudinary","available":true},{"id":"item_9","name":"Raita","description":"Sauce rafraîchissante au yaourt et au concombre, délicatement parfumée aux épices indiennes, idéale pour accompagner les plats épicés.","price":6.5,"category":"Entrées & Spécialités Tandoor","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898779/ovxmovdy6f7jf7dzp7lo.webp","imageSource":"cloudinary","available":true},{"id":"item_10","name":"Sheekh Kebab","description":"Brochettes d’agneau haché délicatement assaisonnées à la coriandre, aux oignons, au gingembre et aux épices indiennes, puis grillées au tandoor pour une saveur authentique.","price":6.5,"category":"Entrées & Spécialités Tandoor","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898790/mctxbyeszgkyv2vqhosk.webp","imageSource":"cloudinary","available":true},{"id":"item_11","name":"Poulet Tandoori","description":"Cuisse de poulet marinée dans un mélange d’épices indiennes et grillée au tandoor pour une saveur authentique et légèrement fumée.","price":7.5,"category":"Entrées & Spécialités Tandoor","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898792/r0rshkb5u9x4rdv2amd1.webp","imageSource":"cloudinary","available":true},{"id":"item_12","name":"Samosas Viande Hachée","description":"Beignets dorés et croustillants garnis de viande hachée délicatement parfumée aux épices indiennes.","price":7,"category":"Entrées & Spécialités Tandoor","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898797/tlgl6jsba4opwtv0tv4y.webp","imageSource":"cloudinary","available":true},{"id":"item_13","name":"Baingan Pakora","description":"Beignets d’aubergine dorés et croustillants à la farine de pois chiches, délicatement parfumés aux épices indiennes.","price":7,"category":"Entrées & Spécialités Tandoor","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898771/bd6dv2qnx0kiy6jpg1gl.webp","imageSource":"cloudinary","available":true},{"id":"item_14","name":"Raita Crevettes","description":"Sauce fraîche au yaourt et aux crevettes, délicatement parfumée aux épices indiennes.","price":8,"category":"Entrées & Spécialités Tandoor","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898782/vcyncipuozwuk8xy4f09.webp","imageSource":"cloudinary","available":true},{"id":"item_15","name":"Assiette Grill","description":"Assortiment de grillades tandoor composé de poulet tikka, agneau tikka et sheesh kebab, préparés aux épices indiennes et grillés au tandoor.","price":12,"category":"Entrées & Spécialités Tandoor","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898795/re0hjvymo3qr9jxxv3jd.webp","imageSource":"cloudinary","available":true},{"id":"item_16","name":"Oignon Bhaja","description":"Beignets d’oignons dorés et croustillants, délicatement parfumés aux épices indiennes.","price":7,"category":"Entrées & Spécialités Tandoor","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898773/dkjonqv3ffmky0a95xba.webp","imageSource":"cloudinary","available":true},{"id":"item_17","name":"Aloo Pakora","description":"Beignets de pommes de terre croustillants à la farine de pois chiches, délicatement parfumés aux épices indiennes.","price":7,"category":"Entrées & Spécialités Tandoor","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898775/w95nbgfgyfan6xtub4ig.webp","imageSource":"cloudinary","available":true},{"id":"item_18","name":"Fish Pakora","description":"Morceaux de poisson enrobés de farine de pois chiches et d’épices indiennes, frits jusqu’à obtenir une texture dorée et croustillante.","price":8,"category":"Entrées & Spécialités Tandoor","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898777/jjc78j2a93iyubjfm15h.webp","imageSource":"cloudinary","available":true},{"id":"item_19","name":"Gambas Tandoori","description":"Savoureuses gambas marinées dans un mélange d’épices indiennes et grillées au tandoor pour une saveur authentique.","price":17,"category":"Entrées & Spécialités Tandoor","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898784/ekah7bcgovpaunt5tjkl.webp","imageSource":"cloudinary","available":true},{"id":"item_20","name":"Agneau Tikka","description":"Tendres morceaux d’agneau marinés aux épices indiennes puis grillés au four tandoor pour une saveur authentique.","price":9.5,"category":"Entrées & Spécialités Tandoor","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898788/oiefmyctfmlfrtf6cxch.webp","imageSource":"cloudinary","available":true},{"id":"item_21","name":"Agneau Taj","description":"Tendres morceaux d’agneau grillés puis mijotés dans une sauce onctueuse au curry et à la crème. Servi avec du riz basmati parfumé.","price":18.5,"category":"Plats à l’Agneau","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898799/ad41mmiwhf6fmxrbkuid.webp","imageSource":"cloudinary","available":true},{"id":"item_22","name":"Agneau Shahi Korma","description":"Tendres morceaux d’agneau mijotés au beurre dans une sauce crémeuse aux amandes, noix de coco et épices délicates. Servi avec riz basmati parfumé.","price":18,"category":"Plats à l’Agneau","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898801/y7a12alhtsl8xojtesd9.webp","imageSource":"cloudinary","available":true},{"id":"item_23","name":"Agneau Masala","description":"Tendres morceaux d’agneau mijotés avec poivrons, tomates et oignons dans une sauce masala riche et parfumée aux épices traditionnelles. Servi avec riz basmati parfumé.","price":18,"category":"Plats à l’Agneau","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898819/ry53oc9erbgumwl5lplt.webp","imageSource":"cloudinary","available":true},{"id":"item_24","name":"Agneau Vindaloo","description":"Tendres morceaux d’agneau mijotés dans une sauce vindaloo légèrement pimentée et riche en épices traditionnelles. Servi avec riz basmati parfumé.","price":18,"category":"Plats à l’Agneau","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898814/zkcq8vlfs7cftx3habpq.webp","imageSource":"cloudinary","available":true},{"id":"item_25","name":"Agneau Jalfrezi","description":"Tendres morceaux d’agneau grillés puis mijotés dans une sauce curry relevée aux aromates frais et aux épices traditionnelles. Servi avec riz basmati parfumé.","price":18.5,"category":"Plats à l’Agneau","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898820/unptocjd5z6jptcfbqf9.webp","imageSource":"cloudinary","available":true},{"id":"item_26","name":"Agneau Rogan Gosht","description":"Tendres morceaux d’agneau mijotés dans une sauce curry riche aux amandes effilées, noix de coco et épices traditionnelles. Servi avec riz basmati parfumé.","price":18.5,"category":"Plats à l’Agneau","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898804/wskunlwpykgu6xwc1zno.webp","imageSource":"cloudinary","available":true},{"id":"item_27","name":"Agneau Madras","description":"Tendres morceaux d’agneau mijotés dans une sauce curry pimentée et parfumée aux épices traditionnelles. Servi avec riz basmati parfumé.","price":17.5,"category":"Plats à l’Agneau","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898806/gtyf9tq3tbyrabxah4vk.webp","imageSource":"cloudinary","available":true},{"id":"item_28","name":"Agneau Aloo Gosht","description":"Tendres morceaux d’agneau mijotés avec des pommes de terre dans une sauce curry riche et parfumée aux épices traditionnelles. Servi avec riz basmati parfumé.","price":18,"category":"Plats à l’Agneau","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898816/wfoaokrxifmvbpltpntl.webp","imageSource":"cloudinary","available":true},{"id":"item_29","name":"Agneau Palak","description":"Tendres morceaux d’agneau mijotés avec des épinards hachés dans une sauce curry riche et parfumée aux épices traditionnelles. Servi avec riz basmati parfumé.","price":18,"category":"Plats à l’Agneau","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898812/kgdtffv6pm3mvqmzpm2t.webp","imageSource":"cloudinary","available":true},{"id":"item_30","name":"Agneau Dopiaza","description":"Tendres morceaux d’agneau mijotés avec des oignons dorés dans une sauce curry riche et parfumée aux épices traditionnelles. Servi avec riz basmati parfumé.","price":17.5,"category":"Plats à l’Agneau","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898808/t2vdr8dns4znuqmomn03.webp","imageSource":"cloudinary","available":true},{"id":"item_31","name":"Agneau Dal Gosht","description":"Tendres morceaux d’agneau mijotés avec des lentilles dans une sauce curry riche et parfumée aux épices traditionnelles. Servi avec riz basmati parfumé.","price":18,"category":"Plats à l’Agneau","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898810/ptw00ry3sjacmrw8fcei.webp","imageSource":"cloudinary","available":true},{"id":"item_32","name":"Poulet Masala","description":"Curry de poulet aux poivrons, tomates, oignons et épices indiennes, servi avec du riz basmati.","price":16.5,"category":"Plats au Poulet","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898823/l0wkjdyh5ugo56kbacmd.webp","imageSource":"cloudinary","available":true},{"id":"item_33","name":"Poulet Taj au Beurre","description":"Morceaux de poulet grillés puis cuisinés dans une sauce crémeuse au beurre, aux amandes effilées et à la noix de coco, délicatement parfumée aux épices indiennes. Servi avec riz basmati parfumé.","price":17.5,"category":"Plats au Poulet","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898840/yj8kiuhadagj94coanps.webp","imageSource":"cloudinary","available":true},{"id":"item_34","name":"Poulet Madras","description":"Poulet mijoté dans une sauce Madras épicée aux tomates, oignons et épices indiennes parfumées, servi avec du riz basmati.","price":16.5,"category":"Plats au Poulet","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898827/qcwmrg7a9mzgonyxtyts.webp","imageSource":"cloudinary","available":true},{"id":"item_35","name":"Poulet Aloo","description":"Tendres morceaux de poulet cuisinés avec des pommes de terre dans une sauce curry riche et parfumée aux épices indiennes. Servi avec riz basmati parfumé.","price":17,"category":"Plats au Poulet","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898837/tqam5i7tthnueuunzujb.webp","imageSource":"cloudinary","available":true},{"id":"item_36","name":"Poulet Dopiaza","description":"Morceaux de poulet mijotés avec des oignons dans une sauce curry parfumée aux épices indiennes. Servi avec riz basmati parfumé.","price":16.5,"category":"Plats au Poulet","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898825/kvmbx1eouddwhplksmbb.webp","imageSource":"cloudinary","available":true},{"id":"item_37","name":"Poulet Vindaloo","description":"Morceaux de poulet mijotés dans une sauce relevée aux épices indiennes et au vinaigre, offrant une saveur intense et légèrement piquante. Servi avec riz basmati parfumé.","price":16.5,"category":"Plats au Poulet","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898829/pi5e7wsllyqipz52fmjh.webp","imageSource":"cloudinary","available":true},{"id":"item_38","name":"Poulet Dal","description":"Tendres morceaux de poulet cuisinés avec des lentilles dans une sauce curry riche et parfumée aux épices indiennes. Servi avec riz basmati parfumé.","price":17,"category":"Plats au Poulet","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898835/whlydbsdcjf4ycmovove.webp","imageSource":"cloudinary","available":true},{"id":"item_39","name":"Poulet Jalfrezi","description":"Tendres morceaux de poulet sautés avec poivrons, oignons et aromates frais dans une sauce relevée aux épices indiennes. Servi avec riz basmati parfumé.","price":17.5,"category":"Plats au Poulet","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898842/flverffellbmq5w7allh.webp","imageSource":"cloudinary","available":true},{"id":"item_40","name":"Poulet Mughlai","description":"Curry de poulet dans une sauce crémeuse aux œufs, parfumé aux épices indiennes, garni d’amandes et de coco râpée. Servi avec du riz basmati.","price":17,"category":"Plats au Poulet","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898831/nryndmebqd7jmyootb99.webp","imageSource":"cloudinary","available":true},{"id":"item_41","name":"Poulet Palak","description":"Curry de poulet cuisiné avec des épinards hachés et un mélange d’épices indiennes parfumées. Servi avec du riz basmati.","price":17,"category":"Plats au Poulet","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898833/vqkqmwzdqgcbzi4opeja.webp","imageSource":"cloudinary","available":true},{"id":"item_42","name":"Poulet Shahi Korma","description":"Tendres morceaux de poulet mijotés dans une sauce riche et crémeuse à base de crème, beurre, amandes et noix de coco, délicatement parfumée aux épices indiennes. Servi avec riz basmati parfumé.","price":17,"category":"Plats au Poulet","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898845/dqz55smx7chalkl2iubx.webp","imageSource":"cloudinary","available":true},{"id":"item_43","name":"Bœuf Masala","description":"Tendres morceaux de bœuf mijotés avec poivrons, tomates et oignons dans une sauce masala riche et parfumée aux épices traditionnelles. Servi avec riz basmati parfumé.","price":16.5,"category":"Plats au Bœuf","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898847/q0zma9d6mwm75tsbodjp.webp","imageSource":"cloudinary","available":true},{"id":"item_44","name":"Bœuf Vindaloo","description":"Tendres morceaux de bœuf cuisinés dans une sauce vindaloo légèrement pimentée et riche en épices traditionnelles. Servi avec riz basmati parfumé","price":16.5,"category":"Plats au Bœuf","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898849/wxbtz8rna4jyajaouuo9.webp","imageSource":"cloudinary","available":true},{"id":"item_45","name":"Bœuf Kashmiri","description":"Tendres morceaux de bœuf mijotés dans une sauce crémeuse aux amandes effilées et à la noix de coco, délicatement parfumée aux épices. Servi avec riz basmati parfumé.","price":16.5,"category":"Plats au Bœuf","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898851/fzkgaw3bhqv6y7zt4ovy.webp","imageSource":"cloudinary","available":true},{"id":"item_46","name":"Bœuf Aloo","description":"Tendres morceaux de bœuf cuisinés avec des pommes de terre dans une sauce curry riche et parfumée aux épices indiennes. Servi avec riz basmati parfumé.","price":16.5,"category":"Plats au Bœuf","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898856/rquvk9ey4oincba0etig.webp","imageSource":"cloudinary","available":true},{"id":"item_47","name":"Bœuf Madras","description":"Tendres morceaux de bœuf cuisinés dans une sauce curry relevée et parfumée aux épices traditionnelles. Servi avec riz basmati parfumé.","price":16.5,"category":"Plats au Bœuf","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898853/eqzamerfl6d2fqpburvm.webp","imageSource":"cloudinary","available":true},{"id":"item_48","name":"Crevettes Masala","description":"Délicieuses crevettes mijotées avec des aromates frais dans une sauce masala riche et parfumée aux épices traditionnelles. Servies avec riz basmati parfumé.","price":18,"category":"Plats aux Fruits de Mer","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898863/lxmdsmdnggjuebbygwyo.webp","imageSource":"cloudinary","available":true},{"id":"item_49","name":"Crevettes Madras","description":"Délicieuses crevettes cuisinées dans une sauce Madras relevée et parfumée aux épices traditionnelles. Servies avec riz basmati parfumé.","price":18,"category":"Plats aux Fruits de Mer","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898861/d0rzgwfhheznm8gqinzl.webp","imageSource":"cloudinary","available":true},{"id":"item_50","name":"Crevettes Malai","description":"Délicieuses crevettes décortiquées cuisinées dans une sauce crémeuse au beurre, aux amandes effilées et à la noix de coco, délicatement parfumée aux épices indiennes. Servies avec riz basmati parfumé.","price":18,"category":"Plats aux Fruits de Mer","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898858/xst1iqtoeuhavq9fjokv.webp","imageSource":"cloudinary","available":true},{"id":"item_51","name":"Gambas Malai","description":"Savoureuses gambas cuisinées dans une sauce crémeuse au beurre, aux amandes effilées et à la noix de coco, délicatement parfumée aux épices indiennes. Servies avec riz basmati parfumé.","price":19,"category":"Plats aux Fruits de Mer","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898865/f1d2qzposycaseyodnny.webp","imageSource":"cloudinary","available":true},{"id":"item_52","name":"Gambas Masala","description":"Savoureuses gambas mijotées avec des aromates frais dans une sauce masala riche et parfumée aux épices traditionnelles. Servies avec riz basmati parfumé.","price":19,"category":"Plats aux Fruits de Mer","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898868/iomj388xnvkqxo5qhkyh.webp","imageSource":"cloudinary","available":true},{"id":"item_53","name":"Gambas Madras","description":"Savoureuses gambas cuisinées dans une sauce Madras relevée et parfumée aux épices traditionnelles. Servies avec riz basmati parfumé.","price":19,"category":"Plats aux Fruits de Mer","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898869/jezcf1bgrzbg9ld1gxir.webp","imageSource":"cloudinary","available":true},{"id":"item_54","name":"Palak Paneer","description":"Morceaux de paneer mijotés dans une sauce onctueuse d’épinards, délicatement parfumée aux épices indiennes. Servi avec riz basmati parfumé.","price":13,"category":"Plats Végétariens","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898883/xjlyx0sep3rrov96vrma.webp","imageSource":"cloudinary","available":true},{"id":"item_55","name":"Baingan Bharta","description":"Aubergines grillées et écrasées mijotées dans une sauce parfumée aux épices indiennes. Servi avec riz basmati parfumé.","price":13,"category":"Plats Végétariens","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898872/rg4rph6hjkafcp0azfod.webp","imageSource":"cloudinary","available":true},{"id":"item_56","name":"Curry de Légumes","description":"Assortiment de légumes frais (petits pois, carottes, chou-fleur, haricots et courgettes) cuisinés dans une sauce curry riche et parfumée aux épices indiennes. Servi avec riz basmati parfumé.","price":12,"category":"Plats Végétariens","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898878/ky6yjxxjidrcjhzqyskj.webp","imageSource":"cloudinary","available":true},{"id":"item_57","name":"Dal Curry","description":"Lentilles mijotées dans une sauce onctueuse au beurre et aux épices indiennes traditionnelles. Servi avec riz basmati parfumé.","price":13,"category":"Plats Végétariens","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898874/gxvl1bxiqltavi1kagjh.webp","imageSource":"cloudinary","available":true},{"id":"item_58","name":"Légumes Korma","description":"Assortiment de légumes frais cuisinés dans une sauce crémeuse aux amandes et à la noix de coco, délicatement parfumée aux épices indiennes. Servi avec riz basmati parfumé.","price":13,"category":"Plats Végétariens","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898880/ws3rddfaipp4wbxpfnbl.webp","imageSource":"cloudinary","available":true},{"id":"item_59","name":"Aloo Palak","description":"Épinards finement hachés mijotés avec des pommes de terre dans une sauce parfumée aux épices indiennes. Servi avec riz basmati parfumé.","price":13,"category":"Plats Végétariens","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898876/botzzlsp6uodckqa37nm.webp","imageSource":"cloudinary","available":true},{"id":"item_60","name":"Naan au fromage","description":"Pain indien moelleux garni de fromage fondant et cuit au four tandoor pour une saveur authentique","price":4,"category":"Naan & Pains Indiens","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898900/w363wvntfakdlugkcu5w.webp","imageSource":"cloudinary","available":true},{"id":"item_61","name":"Naan","description":"Pain indien traditionnel, moelleux et légèrement doré, cuit au four tandoor.","price":2,"category":"Naan & Pains Indiens","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898902/lgvalgj8o61oqg2xlhnf.webp","imageSource":"cloudinary","available":true},{"id":"item_62","name":"Garlic Naan","description":"Pain indien parfumé à l’ail et légèrement beurré, cuit au four tandoor.","price":4,"category":"Naan & Pains Indiens","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898907/kqyzvubsxfxoaccuaham.webp","imageSource":"cloudinary","available":true},{"id":"item_63","name":"Naan Fromage au Piment Vert","description":"Pain indien traditionnel garni de fromage fondant et de piment vert légèrement relevé, cuit au four tandoor pour une saveur authentique.","price":4.5,"category":"Naan & Pains Indiens","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898910/aznldtqjtyrzpwabxusu.webp","imageSource":"cloudinary","available":true},{"id":"item_64","name":"Paratha","description":"Pain indien feuilleté et légèrement croustillant, doré à la poêle pour une texture moelleuse et savoureuse.","price":2,"category":"Naan & Pains Indiens","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898905/kvua4d4d0sjkhdhzaax3.webp","imageSource":"cloudinary","available":true},{"id":"item_65","name":"Halwa","description":"Dessert traditionnel maison à base de semoule de blé, aux amandes et à la noix de coco, délicatement parfumé.","price":6,"category":"Desserts Indiens","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898912/qrdiyunejhz5ymz54gkx.webp","imageSource":"cloudinary","available":true},{"id":"item_66","name":"Coca‑Cola 33 cl","description":"Boisson gazeuse rafraîchissante.","price":3,"category":"Boissons","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898914/ft1uwutpi4rwja2qdv56.webp","imageSource":"cloudinary","available":true},{"id":"item_67","name":"Coca-Cola – 1,25 L","description":"Boisson gazeuse rafraîchissante au goût unique de cola, idéale à partager. Servie bien fraîche en bouteille 1,25 L","price":5,"category":"Boissons","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898916/tlehn32vmbccnlznw4jn.webp","imageSource":"cloudinary","available":true},{"id":"item_68","name":"Coca-Cola Cherry – 33 cl","description":"Boisson gazeuse rafraîchissante au goût unique de cola avec une délicieuse saveur de cerise. Servie bien fraîche en canette 33 cl.","price":3,"category":"Boissons","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898918/ftczovlotnjpgm1qjcux.webp","imageSource":"cloudinary","available":true},{"id":"item_69","name":"Fanta Orange – 33 cl","description":"Boisson gazeuse rafraîchissante au délicieux goût d’orange, pétillante et fruitée. Servie bien fraîche en canette 33 cl.","price":3,"category":"Boissons","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898920/wzrixcfixdv7db3osczz.webp","imageSource":"cloudinary","available":true},{"id":"item_70","name":"Fanta Citron – 33 cl","description":"Boisson gazeuse rafraîchissante au goût intense de citron, pétillante et légèrement acidulée. Servie bien fraîche en canette 33 cl.","price":3,"category":"Boissons","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898922/qpgiyahobsnzam53d19e.webp","imageSource":"cloudinary","available":true},{"id":"item_71","name":"Sprite – 33 cl","description":"Boisson gazeuse rafraîchissante au goût citron-citron vert, légère et pétillante. Servie bien fraîche en canette 33 cl.","price":3,"category":"Boissons","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898925/xngk0mjtnl414tqbzjhn.webp","imageSource":"cloudinary","available":true},{"id":"item_72","name":"Perrier 33 cl – 33 cl","description":"Eau minérale naturelle pétillante aux fines bulles, rafraîchissante et légère. Servie bien fraîche","price":3,"category":"Boissons","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898927/aqulmwtstwb9ggxshzve.webp","imageSource":"cloudinary","available":true},{"id":"item_73","name":"Poulet Biryani","description":"Riz basmati parfumé cuisiné avec des morceaux de poulet et un mélange d’épices indiennes aromatiques.","price":18,"category":"Spécialités du Chef","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898931/zurkdf3jomo7zxgo5pk8.webp","imageSource":"cloudinary","available":true},{"id":"item_74","name":"Agneau Biryani","description":"Riz basmati parfumé cuisiné avec de tendres morceaux d’agneau et un mélange d’épices indiennes traditionnelles.\n\nAllergènes : Peut contenir lait, fruits à coque et gluten.","price":18,"category":"Biryanis","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898886/r5rdifjn2buah185m8mj.webp","imageSource":"cloudinary","available":true},{"id":"item_75","name":"Bœuf Biryani","description":"Riz basmati parfumé mijoté avec de tendres morceaux de bœuf et un mélange d’épices indiennes aromatiques.","price":18,"category":"Biryanis","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898888/rnr7auhywev190bqjt71.webp","imageSource":"cloudinary","available":true},{"id":"item_76","name":"Crevettes Biryani","description":"Riz basmati parfumé mijoté avec de tendres crevettes et un mélange d’épices indiennes aromatiques.","price":18,"category":"Biryanis","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898891/shdmobv3paewcfkicv01.webp","imageSource":"cloudinary","available":true},{"id":"item_77","name":"Gambas Biryani","description":"Riz basmati parfumé mijoté avec de savoureuses gambas et un mélange d’épices indiennes aromatiques.","price":19,"category":"Biryanis","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898893/cyifafcut73jh6dwxeri.webp","imageSource":"cloudinary","available":true},{"id":"item_78","name":"Légumes Biryani","description":"Riz basmati parfumé mijoté avec un mélange de légumes frais et d’épices indiennes aromatiques.","price":15,"category":"Biryanis","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898895/pzwgeoxekswrlmdj81ja.webp","imageSource":"cloudinary","available":true},{"id":"item_79","name":"Mixte Biryani","description":"Riz basmati parfumé cuisiné avec crevettes, agneau, poulet et légumes, délicatement parfumé aux épices indiennes traditionnelles.","price":20,"category":"Biryanis","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898897/nrpliebwgoxwbzxwxh4z.webp","imageSource":"cloudinary","available":true},{"id":"item_80","name":"Riz Basmati","description":"Riz basmati parfumé, aux grains longs et délicats, idéal pour accompagner les spécialités indiennes.","price":4,"category":"Accompagnements","image":"https://res.cloudinary.com/dxadv2u2m/image/upload/v1776898929/q9xdekiyxzkrpr8dpcq9.webp","imageSource":"cloudinary","available":true}];
 
-window.uploadMenu = async function() {
-  const btn = document.getElementById('startBtn');
-  const log = document.getElementById('log');
-  const done = document.getElementById('done');
+function addLog(msg, type) {
+  var log = document.getElementById('log');
+  log.style.display = 'block';
+  log.innerHTML += '<div class="' + (type||'info') + '">' + msg + '</div>';
+  log.scrollTop = log.scrollHeight;
+}
+
+async function startUpload() {
+  var btn = document.getElementById('uploadBtn');
   btn.disabled = true;
   btn.textContent = 'Uploading...';
   
-  log.innerHTML = '<div class="log-info">Starting upload...</div>';
+  var progressWrap = document.getElementById('progressWrap');
+  var progressBar = document.getElementById('progressBar');
+  progressWrap.style.display = 'block';
   
-  // First, clear existing menu items
-  log.innerHTML += '<div class="log-info">Clearing old menu items...</div>';
+  document.getElementById('log').style.display = 'block';
+  addLog('Starting menu upload with ORIGINAL images...', 'info');
+  addLog('Total items: ' + menuItems.length, 'info');
+  addLog('Original images: ' + menuItems.filter(function(i){return i.imageSource==='cloudinary'}).length, 'success');
+  
+  // Clear existing menu
+  addLog('Clearing existing menu items from Firebase...', 'info');
   try {
-    const existing = await getDocs(collection(db, 'menu'));
-    let delCount = 0;
-    for (const d of existing.docs) {
-      await deleteDoc(doc(db, 'menu', d.id));
-      delCount++;
-    }
-    log.innerHTML += '<div class="log-ok">Cleared ' + delCount + ' old items</div>';
+    var snapshot = await db.collection('menu').get();
+    var deleteBatch = db.batch();
+    snapshot.forEach(function(doc) { deleteBatch.delete(doc.ref); });
+    await deleteBatch.commit();
+    addLog('Cleared ' + snapshot.size + ' existing items', 'success');
   } catch(e) {
-    log.innerHTML += '<div class="log-err">Clear error: ' + e.message + '</div>';
+    addLog('Clear error: ' + e.message, 'error');
   }
   
-  // Upload new items
-  let ok = 0, fail = 0;
-  for (let i = 0; i < MENU_DATA.length; i++) {
-    const item = MENU_DATA[i];
-    try {
-      await addDoc(collection(db, 'menu'), {
+  // Upload in batches
+  var uploaded = 0;
+  var batchSize = 20;
+  
+  for (var i = 0; i < menuItems.length; i += batchSize) {
+    var batch = db.batch();
+    var chunk = menuItems.slice(i, i + batchSize);
+    
+    chunk.forEach(function(item) {
+      var docRef = db.collection('menu').doc(item.id);
+      batch.set(docRef, {
         name: item.name,
+        description: item.description,
         price: item.price,
-        description: item.description || '',
         category: item.category,
-        badge: item.badge || '',
-        image: item.image || ''
+        image: item.image,
+        available: item.available,
+        order: menuItems.indexOf(item)
       });
-      ok++;
-      if (ok % 20 === 0 || i === MENU_DATA.length - 1) {
-        log.innerHTML += '<div class="log-ok">Uploaded ' + ok + '/' + MENU_DATA.length + '</div>';
-      }
+    });
+    
+    try {
+      await batch.commit();
+      uploaded += chunk.length;
+      var pct = Math.round((uploaded / menuItems.length) * 100);
+      progressBar.style.width = pct + '%';
+      progressBar.textContent = pct + '%';
+      addLog('Uploaded: ' + uploaded + '/' + menuItems.length + ' items', 'success');
     } catch(e) {
-      fail++;
-      log.innerHTML += '<div class="log-err">Error: ' + item.name + ' - ' + e.message + '</div>';
+      addLog('Batch error: ' + e.message, 'error');
     }
+    
+    await new Promise(function(r) { setTimeout(r, 500); });
   }
   
-  log.innerHTML += '<div class="log-ok"><strong>Done! ' + ok + ' items uploaded, ' + fail + ' errors</strong></div>';
-  btn.textContent = 'Complete!';
-  done.style.display = 'block';
-};
+  addLog('Upload complete! ' + uploaded + ' items with ORIGINAL images uploaded.', 'success');
+  
+  btn.textContent = 'Done! Original Images Restored';
+  btn.style.background = 'linear-gradient(135deg, #1a6b1a, #2a8a2a)';
+}
 </script>
+
 </body>
 </html>
