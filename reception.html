@@ -122,6 +122,18 @@ nav{padding:16px 0;flex:1;}
 .history-table td{padding:12px 14px;font-size:12px;border-bottom:1px solid rgba(201,168,76,0.08);}
 .history-table tr:hover td{background:var(--cream2);}
 
+/* FINANCE CONTROLS */
+.finance-controls{background:white;border-radius:14px;border:1px solid var(--border);padding:20px;margin-bottom:20px;box-shadow:0 2px 12px var(--shadow);}
+.finance-date-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;}
+.finance-date-row .form-group{flex:1;min-width:140px;}
+.btn-filter{background:var(--garnet);color:white;border:none;border-radius:8px;padding:10px 24px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;font-family:'Lato',sans-serif;transition:all .2s;height:42px;}
+.btn-filter:hover{background:var(--garnet-light);}
+.finance-export-row{display:flex;gap:10px;margin-top:14px;}
+.btn-export{background:rgba(201,168,76,0.12);color:var(--gold);border:1px solid var(--gold-dim);border-radius:8px;padding:8px 18px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;font-family:'Lato',sans-serif;transition:all .2s;display:flex;align-items:center;gap:6px;}
+.btn-export:hover{background:rgba(201,168,76,0.2);}
+.finance-table-wrap{overflow-x:auto;}
+.sum-card.s-pending .sum-val{color:var(--pending);}
+
 /* MENU EDITOR */
 .menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;}
 .menu-card{background:white;border-radius:14px;border:1px solid var(--border);box-shadow:0 2px 12px var(--shadow);overflow:hidden;}
@@ -210,7 +222,8 @@ input[type=checkbox].toggle:checked::after{left:23px;}
 <!-- SIDEBAR -->
 <div class="sidebar">
   <div class="sidebar-logo">
-    <h2>🏛 TAJ MAHAL</h2>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/Taj_Mahal_%28logo%29.svg/1200px-Taj_Mahal_%28logo%29.svg.png" alt="Taj Mahal" onerror="this.style.display='none'">
+    <h2>TAJ MAHAL</h2>
     <p>Reception Dashboard</p>
   </div>
   <nav>
@@ -219,7 +232,7 @@ input[type=checkbox].toggle:checked::after{left:23px;}
       <span class="nav-badge" id="nav-badge">0</span>
     </div>
     <div class="nav-item" id="nav-history" onclick="window.showTab('history')">
-      <span class="nav-icon">📅</span> Historique
+      <span class="nav-icon">💰</span> Finance
     </div>
     <div class="nav-item" id="nav-menu" onclick="window.showTab('menu')">
       <span class="nav-icon">🍽</span> Éditer Menu
@@ -273,12 +286,42 @@ input[type=checkbox].toggle:checked::after{left:23px;}
       </div>
     </div>
 
-    <!-- HISTORY TAB -->
+    <!-- FINANCE DASHBOARD TAB -->
     <div id="tab-history" class="hidden">
-      <table class="history-table">
-        <thead><tr><th>TABLE</th><th>REF</th><th>HEURE</th><th>ITEMS</th><th>TOTAL</th><th>STATUT</th></tr></thead>
-        <tbody id="history-body"></tbody>
-      </table>
+      <!-- Date Range Filter -->
+      <div class="finance-controls">
+        <div class="finance-date-row">
+          <div class="form-group">
+            <label class="form-label">Du</label>
+            <input type="date" class="form-input" id="hist-from">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Au</label>
+            <input type="date" class="form-input" id="hist-to">
+          </div>
+          <button class="btn-filter" onclick="window.filterHistory()">Filtrer</button>
+        </div>
+        <div class="finance-export-row">
+          <button class="btn-export" onclick="window.exportExcel()">📊 Export Excel</button>
+          <button class="btn-export" onclick="window.exportPDF()">📄 Export PDF</button>
+        </div>
+      </div>
+
+      <!-- Finance Summary Cards -->
+      <div class="summary-grid" id="finance-summary">
+        <div class="sum-card s-revenue"><div class="sum-label">Chiffre d'Affaires</div><div class="sum-val" id="f-revenue">0€</div></div>
+        <div class="sum-card s-preparing"><div class="sum-label">Nombre de Commandes</div><div class="sum-val" id="f-orders">0</div></div>
+        <div class="sum-card s-pending"><div class="sum-label">Panier Moyen</div><div class="sum-val" id="f-avg">0€</div></div>
+        <div class="sum-card s-ready"><div class="sum-label">Articles Vendus</div><div class="sum-val" id="f-items">0</div></div>
+      </div>
+
+      <!-- Orders Table -->
+      <div class="finance-table-wrap">
+        <table class="history-table">
+          <thead><tr><th>DATE</th><th>TABLE</th><th>REF</th><th>ITEMS</th><th>TOTAL</th><th>STATUT</th></tr></thead>
+          <tbody id="history-body"></tbody>
+        </table>
+      </div>
     </div>
 
     <!-- MENU EDITOR TAB -->
@@ -453,7 +496,7 @@ function startListeners() {
     });
     allOrders = newOrders;
     renderOrders();
-    renderHistory();
+    renderFinanceDashboard();
     updateSummary();
   }, (err) => {
     console.error('[Reception] Orders listener ERROR:', err.code, err.message);
@@ -492,10 +535,10 @@ function startListeners() {
 function renderOrders() {
   const grid = document.getElementById('orders-grid');
   if (!grid) return;
-  
+
   const active = allOrders.filter(o => o.status !== 'served' && o.status !== 'cancelled');
   let filtered = currentFilter === 'all' ? active : active.filter(o => o.status === currentFilter);
-  
+
   // Sort: pending first, then preparing, then ready
   const statusOrder = { pending: 0, preparing: 1, ready: 2 };
   filtered.sort((a, b) => {
@@ -506,22 +549,22 @@ function renderOrders() {
     const tb = b.createdAt?.toMillis?.() || 0;
     return ta - tb;
   });
-  
+
   if (filtered.length === 0) {
     grid.innerHTML = '<div class="loading-line">Aucune commande en cours</div>';
     return;
   }
-  
+
   grid.innerHTML = filtered.map(o => {
     const ref = o.id ? o.id.substring(0,6).toUpperCase() : '—';
     const elapsed = getElapsed(o.createdAt);
-    const items = (o.items || []).map(i => 
+    const items = (o.items || []).map(i =>
       `<div class="item-row"><span class="item-left"><span class="item-qty">×${i.qty||1}</span> ${esc(i.name||'')}</span><span class="item-price">${((i.price||0)*(i.qty||1)).toFixed(2)}€</span></div>`
     ).join('');
     const note = o.note ? `<div style="padding:4px 16px 8px;font-size:11px;color:var(--orange);font-style:italic;">📝 ${esc(o.note)}</div>` : '';
     const nextStatus = { pending:'preparing', preparing:'ready', ready:'served' }[o.status];
     const nextLabel = { pending:'▶ Préparer', preparing:'✓ Prêt', ready:'🍽 Servi' }[o.status];
-    
+
     return `<div class="order-card ${o.status}">
       <div class="card-head">
         <div><div class="card-table">Table ${o.table ?? '—'}</div><div class="card-ref">REF: ${ref}</div></div>
@@ -543,29 +586,92 @@ function renderOrders() {
       </div>
     </div>`;
   }).join('');
-  
+
   // Update nav badge
   const pendingCount = active.filter(o => o.status === 'pending').length;
   const badge = document.getElementById('nav-badge');
   if (badge) badge.textContent = pendingCount;
 }
 
-function renderHistory() {
+// ─── FINANCE DASHBOARD ───
+const RETENTION_DAYS = 45;
+
+function initFinanceDateDefaults() {
+  const fromEl = document.getElementById('hist-from');
+  const toEl = document.getElementById('hist-to');
+  if (!fromEl || !toEl) return;
+  const now = new Date();
+  const cutoff = new Date(now.getTime() - RETENTION_DAYS * 86400000);
+  const fmt = d => d.toISOString().slice(0,10);
+  if (!fromEl.value) fromEl.value = fmt(cutoff);
+  if (!toEl.value) toEl.value = fmt(now);
+}
+
+function getFilteredHistory() {
+  const fromEl = document.getElementById('hist-from');
+  const toEl = document.getElementById('hist-to');
+  const now = new Date();
+  const cutoff = new Date(now.getTime() - RETENTION_DAYS * 86400000);
+
+  let filtered = allOrders.filter(o => {
+    const t = o.createdAt?.toMillis?.() || 0;
+    return t >= cutoff.getTime(); // 45-day retention
+  });
+
+  // Apply date filter if set
+  if (fromEl && fromEl.value) {
+    const fromDate = new Date(fromEl.value);
+    fromDate.setHours(0,0,0,0);
+    filtered = filtered.filter(o => {
+      const t = o.createdAt?.toMillis?.() || 0;
+      return t >= fromDate.getTime();
+    });
+  }
+  if (toEl && toEl.value) {
+    const toDate = new Date(toEl.value);
+    toDate.setHours(23,59,59,999);
+    filtered = filtered.filter(o => {
+      const t = o.createdAt?.toMillis?.() || 0;
+      return t <= toDate.getTime();
+    });
+  }
+
+  return filtered;
+}
+
+function renderFinanceDashboard() {
+  initFinanceDateDefaults();
+  const orders = getFilteredHistory();
+  const served = orders.filter(o => o.status === 'served');
+
+  // Summary
+  const revenue = served.reduce((s,o) => s + (o.total||0), 0);
+  const orderCount = served.length;
+  const avgOrder = orderCount > 0 ? revenue / orderCount : 0;
+  const itemCount = served.reduce((s,o) => s + (o.items||[]).reduce((a,i) => a + (i.qty||1), 0), 0);
+
+  const fr = document.getElementById('f-revenue'); if(fr) fr.textContent = revenue.toFixed(2) + '€';
+  const fo = document.getElementById('f-orders'); if(fo) fo.textContent = orderCount;
+  const fa = document.getElementById('f-avg'); if(fa) fa.textContent = avgOrder.toFixed(2) + '€';
+  const fi = document.getElementById('f-items'); if(fi) fi.textContent = itemCount;
+
+  // Table
   const tbody = document.getElementById('history-body');
   if (!tbody) return;
-  const done = allOrders.filter(o => o.status === 'served' || o.status === 'cancelled');
-  done.sort((a,b) => {
+  const all = orders.filter(o => o.status === 'served' || o.status === 'cancelled');
+  all.sort((a,b) => {
     const ta = a.createdAt?.toMillis?.() || 0;
     const tb = b.createdAt?.toMillis?.() || 0;
     return tb - ta;
   });
-  tbody.innerHTML = done.map(o => {
+  tbody.innerHTML = all.map(o => {
     const ref = o.id ? o.id.substring(0,6).toUpperCase() : '—';
     const itemNames = (o.items||[]).map(i=>i.name).join(', ');
+    const dateStr = o.createdAt ? (o.createdAt.toDate ? o.createdAt.toDate() : new Date(o.createdAt)).toLocaleDateString('fr-FR') : '—';
     return `<tr>
+      <td>${dateStr}</td>
       <td><strong>Table ${o.table??'—'}</strong></td>
       <td>${ref}</td>
-      <td>${formatTime(o.createdAt)}</td>
       <td>${esc(itemNames)}</td>
       <td>${(o.total||0).toFixed(2)}€</td>
       <td><span class="status-badge ${o.status}">${statusLabel(o.status)}</span></td>
@@ -584,7 +690,7 @@ function updateSummary() {
   const preparing = todayOrders.filter(o=>o.status==='preparing').length;
   const ready = todayOrders.filter(o=>o.status==='ready').length;
   const revenue = todayOrders.filter(o=>o.status==='served').reduce((s,o)=>s+(o.total||0),0);
-  
+
   const sp = document.getElementById('s-pending'); if(sp) sp.textContent = pending;
   const spr = document.getElementById('s-preparing'); if(spr) spr.textContent = preparing;
   const sr = document.getElementById('s-ready'); if(sr) sr.textContent = ready;
@@ -886,7 +992,7 @@ window.showTab = function(tab) {
     if (el) el.classList.toggle('hidden', t !== tab);
     if (nav) nav.classList.toggle('active', t === tab);
   });
-  const titles = { live:'Commandes en Cours', history:'Historique', menu:'Éditer le Menu', printers:'Imprimantes' };
+  const titles = { live:'Commandes en Cours', history:'Finance', menu:'Éditer le Menu', printers:'Imprimantes' };
   const pt = document.getElementById('page-title');
   if (pt) pt.textContent = titles[tab] || '';
 };
@@ -1086,6 +1192,75 @@ window.deleteMenuItem = async function(docId) {
     await deleteDoc(doc(db, 'menu', docId));
     showNotif('Produit supprimé');
   } catch(e) { console.error(e); showNotif('Erreur: '+e.message); }
+};
+
+// ─── FINANCE EXPORT FUNCTIONS ───
+window.filterHistory = function() {
+  renderFinanceDashboard();
+};
+
+window.exportExcel = function() {
+  const orders = getFilteredHistory().filter(o => o.status === 'served' || o.status === 'cancelled');
+  let csv = 'Date;Table;Ref;Items;Total;Statut\n';
+  orders.forEach(o => {
+    const ref = o.id ? o.id.substring(0,6).toUpperCase() : '—';
+    const itemNames = (o.items||[]).map(i=>i.name).join(', ');
+    const dateStr = o.createdAt ? (o.createdAt.toDate ? o.createdAt.toDate() : new Date(o.createdAt)).toLocaleDateString('fr-FR') : '—';
+    const status = statusLabel(o.status);
+    csv += `${dateStr};Table ${o.table??'—'};${ref};${itemNames};${(o.total||0).toFixed(2)}€;${status}\n`;
+  });
+  const blob = new Blob(['\uFEFF' + csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'tajmahal_rapport_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showNotif('📊 Export Excel téléchargé');
+};
+
+window.exportPDF = function() {
+  const orders = getFilteredHistory().filter(o => o.status === 'served' || o.status === 'cancelled');
+  const served = orders.filter(o => o.status === 'served');
+  const revenue = served.reduce((s,o) => s + (o.total||0), 0);
+
+  let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Rapport Taj Mahal</title>
+  <style>body{font-family:Arial,sans-serif;padding:30px;color:#333;}
+  h1{color:#9B111E;font-size:1.5rem;}h2{color:#CC5500;font-size:1rem;margin-top:20px;}
+  table{width:100%;border-collapse:collapse;margin-top:10px;}
+  th{background:#FFFDD0;color:#9B111E;padding:8px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid #C9A84C;}
+  td{padding:6px 8px;font-size:12px;border-bottom:1px solid #eee;}
+  .total-row{font-weight:bold;border-top:2px solid #9B111E;}
+  .header-logo{width:60px;height:60px;border-radius:50%;background:white;padding:4px;object-fit:contain;float:right;}
+  .summary{display:flex;gap:30px;margin:15px 0;}
+  .summary-item{text-align:center;}.summary-val{font-size:1.5rem;font-weight:bold;color:#9B111E;}.summary-label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px;}
+  </style></head><body>
+  <img class="header-logo" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/Taj_Mahal_%28logo%29.svg/1200px-Taj_Mahal_%28logo%29.svg.png" onerror="this.style.display='none'">
+  <h1>TAJ MAHAL — Rapport Financier</h1>
+  <p style="color:#888;">Généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}</p>
+  <div class="summary">
+    <div class="summary-item"><div class="summary-val">${revenue.toFixed(2)}€</div><div class="summary-label">Chiffre d'affaires</div></div>
+    <div class="summary-item"><div class="summary-val">${served.length}</div><div class="summary-label">Commandes servies</div></div>
+    <div class="summary-item"><div class="summary-val">${served.length > 0 ? (revenue/served.length).toFixed(2) : '0.00'}€</div><div class="summary-label">Panier moyen</div></div>
+  </div>
+  <h2>Détail des commandes</h2>
+  <table><thead><tr><th>Date</th><th>Table</th><th>Ref</th><th>Articles</th><th>Total</th><th>Statut</th></tr></thead><tbody>`;
+
+  orders.forEach(o => {
+    const ref = o.id ? o.id.substring(0,6).toUpperCase() : '—';
+    const itemNames = (o.items||[]).map(i=>i.name).join(', ');
+    const dateStr = o.createdAt ? (o.createdAt.toDate ? o.createdAt.toDate() : new Date(o.createdAt)).toLocaleDateString('fr-FR') : '—';
+    html += `<tr><td>${dateStr}</td><td>Table ${o.table??'—'}</td><td>${ref}</td><td>${itemNames}</td><td>${(o.total||0).toFixed(2)}€</td><td>${statusLabel(o.status)}</td></tr>`;
+  });
+
+  html += `<tr class="total-row"><td colspan="4">TOTAL</td><td>${revenue.toFixed(2)}€</td><td></td></tr>`;
+  html += '</tbody></table></body></html>';
+
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(() => { w.print(); }, 500);
+  showNotif('📄 Rapport PDF généré');
 };
 
 // ─── TEST FIREBASE FUNCTION ───
