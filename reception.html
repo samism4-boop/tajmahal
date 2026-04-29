@@ -870,8 +870,7 @@ function signQZData(toSign) {
     var pKey = forge.pki.privateKeyFromPem(_PRIVATE_KEY);
     var md = forge.md.sha512.create();
     md.update(toSign, 'utf8');
-    var sig = pKey.sign(md);
-    return forge.util.encode64(sig);
+    return forge.util.encode64(pKey.sign(md));
   } catch(e) { console.error('QZ sign error:', e); return ''; }
 }
 
@@ -1033,8 +1032,11 @@ window.connectQZ = async function() {
     // Set up certificate for silent signing
     qz.security.setCertificatePromise(function(resolve, reject) { resolve(_CERT); });
     qz.security.setSignatureAlgorithm('SHA512');
-    qz.security.setSignaturePromise(function(hash) {
-      return function(resolve, reject) { resolve(signQZData(hash)); };
+    qz.security.setSignaturePromise(function(toSign) {
+      return new Promise(function(resolve, reject) {
+        try { resolve(signQZData(toSign)); }
+        catch(e) { reject(e); }
+      });
     });
     await qz.websocket.connect();
     const badge = document.getElementById('qz-badge');
