@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/rsvp@4.8.5/dist/rsvp.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/node-forge@1.3.1/dist/forge.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsrsasign/11.1.0/jsrsasign-all-min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.4/qz-tray.js"></script>
 <style>
 :root{
@@ -867,76 +868,75 @@ function isAutoPrintEnabled() { const t = document.getElementById('auto-print-to
 
 function signQZData(toSign) {
   try {
-    var pKey = forge.pki.privateKeyFromPem(_PRIVATE_KEY);
-    var md = forge.md.sha256.create();
-    md.update(toSign, 'utf8');
-    return forge.util.encode64(pKey.sign(md));
+    var sig = new KJUR.crypto.Signature({"alg": "SHA512withRSA"});
+    sig.init(_PRIVATE_KEY);
+    sig.updateString(toSign);
+    var hex = sig.sign();
+    return hex2b64(hex);
   } catch(e) { console.error('QZ sign error:', e); return ''; }
 }
 
 function buildReceptionTicket(order) {
-  const now = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-  const ref = order.id ? order.id.substring(0,6).toUpperCase() : '????';
-  const W = 32;
-  const NL = '\n';
-  const pad = (s) => { const p = Math.max(0,Math.floor((W-s.length)/2)); return ' '.repeat(p)+s; };
-  const row = (a,b) => { const sp = Math.max(1,W-a.length-b.length); return a+' '.repeat(sp)+b; };
-  const hr = '-'.repeat(W);
-  let t = '\x1B\x40'; // init
-  t += pad('*** CLIENT ***') + NL;
-  t += pad('TAJ MAHAL') + NL;
-  t += pad('Restaurant Indien') + NL;
-  t += hr + NL;
-  t += row('TABLE:', order.table||'?') + NL;
-  t += row('REF:', '#'+ref) + NL;
-  t += row('HEURE:', now) + NL;
-  t += hr + NL;
+  const now = new Date().toLocaleString('fr-FR');
+  const ref = order.id ? order.id.substring(0,6).toUpperCase() : '—';
+  let lines = [];
+  lines.push({type:'raw', data:'\x1B\x40'}); // ESC @ init
+  lines.push({type:'raw', data:'\x1B\x61\x01'}); // center
+  lines.push({type:'raw', data:'\x1B\x45\x01'}); // bold on
+  lines.push({type:'text', data:'  TAJ MAHAL  ', style:{bold:true}});
+  lines.push({type:'raw', data:'\x1B\x45\x00'}); // bold off
+  lines.push({type:'raw', data:'\x0A'});
+  lines.push({type:'text', data:'------------------------'});
+  lines.push({type:'raw', data:'\x1B\x61\x00'}); // left
+  lines.push({type:'text', data:'Table: ' + (order.table||'?')});
+  lines.push({type:'text', data:'Ref: ' + ref});
+  lines.push({type:'text', data:'Date: ' + now});
+  lines.push({type:'text', data:'------------------------'});
   (order.items||[]).forEach(i => {
-    const name = (i.qty||1)+'x '+(i.name||'').substring(0,20);
-    const price = ((i.subtotal||0)).toFixed(2)+'E';
-    t += row(name, price) + NL;
+    lines.push({type:'text', data:(i.qty||1)+'x '+((i.name||'')).substring(0,20)+'  '+((i.price||0)*(i.qty||1)).toFixed(2)+'E'});
   });
-  t += hr + NL;
-  t += row('TOTAL:', (order.total||0).toFixed(2)+'E') + NL;
-  t += hr + NL;
-  t += pad('Merci de votre visite!') + NL;
-  t += '\n\n\n';
-  t += '\x1D\x56\x00'; // cut
-  return [{type:'raw', format:'plain', data:t}];
+  lines.push({type:'text', data:'------------------------'});
+  lines.push({type:'raw', data:'\x1B\x45\x01'});
+  lines.push({type:'text', data:'TOTAL: '+(order.total||0).toFixed(2)+'E', style:{bold:true}});
+  lines.push({type:'raw', data:'\x1B\x45\x00'});
+  if (order.note) { lines.push({type:'text', data:'Note: '+(order.note||'').substring(0,40)}); }
+  lines.push({type:'raw', data:'\x0A\x0A\x0A'});
+  lines.push({type:'raw', data:'\x1D\x56\x00'}); // cut
+  return lines;
 }
 
 function buildKitchenTicket(order) {
-  const now = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-  const ref = order.id ? order.id.substring(0,6).toUpperCase() : '????';
-  const W = 32;
-  const NL = '\n';
-  const pad = (s) => { const p = Math.max(0,Math.floor((W-s.length)/2)); return ' '.repeat(p)+s; };
-  const row = (a,b) => { const sp = Math.max(1,W-a.length-b.length); return a+' '.repeat(sp)+b; };
-  const hr = '-'.repeat(W);
-  let t = '\x1B\x40'; // init
-  t += pad('*** CUISINE ***') + NL;
-  t += pad('TAJ MAHAL') + NL;
-  t += hr + NL;
-  t += row('TABLE:', order.table||'?') + NL;
-  t += row('REF:', '#'+ref) + NL;
-  t += row('HEURE:', now) + NL;
-  t += hr + NL;
+  const ref = order.id ? order.id.substring(0,6).toUpperCase() : '—';
+  let lines = [];
+  lines.push({type:'raw', data:'\x1B\x40'});
+  lines.push({type:'raw', data:'\x1B\x61\x01'});
+  lines.push({type:'raw', data:'\x1B\x45\x01'});
+  lines.push({type:'text', data:'** CUISINE **', style:{bold:true}});
+  lines.push({type:'raw', data:'\x1B\x45\x00'});
+  lines.push({type:'raw', data:'\x0A'});
+  lines.push({type:'raw', data:'\x1B\x61\x00'});
+  lines.push({type:'text', data:'Table: '+(order.table||'?')+'  Ref: '+ref});
+  lines.push({type:'text', data:'------------------------'});
   (order.items||[]).forEach(i => {
-    t += '  x'+(i.qty||1)+' '+(i.name||'').substring(0,26) + NL;
+    lines.push({type:'text', data:'  '+(i.qty||1)+'x '+((i.name||'')).substring(0,22)});
   });
-  t += hr + NL;
-  t += pad('-- Preparer cette commande --') + NL;
-  if (order.note) { t += 'NOTE: '+(order.note||'').substring(0,40) + NL; }
-  t += '\n\n\n';
-  t += '\x1D\x56\x00'; // cut
-  return [{type:'raw', format:'plain', data:t}];
+  if (order.note) {
+    lines.push({type:'text', data:'------------------------'});
+    lines.push({type:'raw', data:'\x1B\x45\x01'});
+    lines.push({type:'text', data:'NOTE: '+(order.note||'').substring(0,40)});
+    lines.push({type:'raw', data:'\x1B\x45\x00'});
+  }
+  lines.push({type:'raw', data:'\x0A\x0A\x0A'});
+  lines.push({type:'raw', data:'\x1D\x56\x00'});
+  return lines;
 }
 
 async function sendToPrinter(printerName, data) {
-  if (!isQZConnected()) { showNotif('QZ Tray non connecte'); return; }
+  if (!isQZConnected()) { showNotif('QZ Tray non connecté'); return; }
   try {
-    var config = qz.configs.create(printerName, {raw:true, copies:1});
+    var config = qz.configs.create(printerName, { encoding: 'UTF-8' });
     await qz.print(config, data);
+    showNotif('Impression envoyée à ' + printerName);
   } catch(e) { console.error('Print error:', e); showNotif('Erreur impression: '+e.message); }
 }
 
@@ -1033,21 +1033,17 @@ window.connectQZ = async function() {
     if (isQZConnected()) { showNotif('QZ Tray déjà connecté'); return; }
     // Set up certificate for silent signing
     qz.security.setCertificatePromise(function(resolve, reject) { resolve(_CERT); });
+    qz.security.setSignatureAlgorithm('SHA512');
     qz.security.setSignaturePromise(function(hash) {
       return function(resolve, reject) { resolve(signQZData(hash)); };
     });
     await qz.websocket.connect();
-    // Keepalive - ping every 20s to prevent disconnect
     if (!window._qzKeepAlive) {
-      window._qzKeepAlive = setInterval(async () => {
+      window._qzKeepAlive = setInterval(() => {
         if (typeof qz !== 'undefined' && !qz.websocket.isActive()) {
-          console.log('QZ disconnected - reconnecting...');
-          try {
-            await qz.websocket.connect();
-            console.log('QZ reconnected');
-          } catch(e) { console.log('QZ reconnect failed:', e.message); }
+          qz.websocket.connect().catch(e => console.log('QZ reconnect:', e.message));
         }
-      }, 20000);
+      }, 15000);
     }
     const badge = document.getElementById('qz-badge');
     if (badge) { badge.className = 'qz-badge connected'; badge.textContent = 'CONNECTÉ'; }
