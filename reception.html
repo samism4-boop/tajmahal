@@ -871,14 +871,13 @@ function signQZData(toSign) {
     var sig = new KJUR.crypto.Signature({"alg": "SHA512withRSA"});
     sig.init(_PRIVATE_KEY);
     sig.updateString(toSign);
-    var hex = sig.sign();
-    return hex2b64(hex);
+    return hex2b64(sig.sign());
   } catch(e) { console.error('QZ sign error:', e); return ''; }
 }
 
 function buildReceptionTicket(order) {
   const now = new Date().toLocaleString('fr-FR');
-  const ref = order.id ? order.id.substring(0,6).toUpperCase() : '—';
+  const ref = order.id ? order.id.substring(0,6).toUpperCase() : '????';
   let lines = [];
   lines.push({type:'raw', data:'\x1B\x40'}); // ESC @ init
   lines.push({type:'raw', data:'\x1B\x61\x01'}); // center
@@ -893,7 +892,7 @@ function buildReceptionTicket(order) {
   lines.push({type:'text', data:'Date: ' + now});
   lines.push({type:'text', data:'------------------------'});
   (order.items||[]).forEach(i => {
-    lines.push({type:'text', data:(i.qty||1)+'x '+((i.name||'')).substring(0,20)+'  '+((i.price||0)*(i.qty||1)).toFixed(2)+'E'});
+    lines.push({type:'text', data:(i.qty||1)+'x '+((i.name||'')).substring(0,20)+'  '+(i.subtotal||(i.price||0)*(i.qty||1)||0).toFixed(2)+'E'});
   });
   lines.push({type:'text', data:'------------------------'});
   lines.push({type:'raw', data:'\x1B\x45\x01'});
@@ -906,7 +905,7 @@ function buildReceptionTicket(order) {
 }
 
 function buildKitchenTicket(order) {
-  const ref = order.id ? order.id.substring(0,6).toUpperCase() : '—';
+  const ref = order.id ? order.id.substring(0,6).toUpperCase() : '????';
   let lines = [];
   lines.push({type:'raw', data:'\x1B\x40'});
   lines.push({type:'raw', data:'\x1B\x61\x01'});
