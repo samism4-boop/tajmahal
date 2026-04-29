@@ -489,7 +489,7 @@ function startListeners() {
         knownOrderIds.add(d.id);
         showNewOrderAlert(data);
         if (isAutoPrintEnabled() && isQZConnected()) {
-          autoPrintOrder(data);
+          autoPrintOrder({ id: d.id, ...data });
         }
       } else {
         knownOrderIds.add(d.id);
@@ -878,8 +878,7 @@ function signQZData(toSign) {
 function buildReceptionTicket(order) {
   const now = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
   const ref = order.id ? order.id.substring(0,6).toUpperCase() : '????';
-  const W = 32;
-  const NL = '\n';
+  const W = 32; const NL = '\n';
   const pad = (s) => { const p = Math.max(0,Math.floor((W-s.length)/2)); return ' '.repeat(p)+s; };
   const row = (a,b) => { const sp = Math.max(1,W-a.length-b.length); return a+' '.repeat(sp)+b; };
   const hr = '-'.repeat(W);
@@ -888,7 +887,7 @@ function buildReceptionTicket(order) {
   t += pad('TAJ MAHAL') + NL;
   t += pad('Restaurant Indien') + NL;
   t += hr + NL;
-  t += row('TABLE:', ''+( order.table||'?')) + NL;
+  t += row('TABLE:', ''+(order.table||order.tableNumber||order.tableNum||'?')) + NL;
   t += row('REF:', '#'+ref) + NL;
   t += row('HEURE:', now) + NL;
   t += hr + NL;
@@ -901,7 +900,7 @@ function buildReceptionTicket(order) {
   t += row('TOTAL:', (order.total||0).toFixed(2)+'E') + NL;
   t += hr + NL;
   t += pad('Merci de votre visite!') + NL;
-  t += NL + NL + NL;
+  t += NL + NL + NL + NL + NL;
   t += '\x1D\x56\x00';
   return [{type:'raw', data:t}];
 }
@@ -909,15 +908,14 @@ function buildReceptionTicket(order) {
 function buildKitchenTicket(order) {
   const now = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
   const ref = order.id ? order.id.substring(0,6).toUpperCase() : '????';
-  const W = 32;
-  const NL = '\n';
+  const W = 32; const NL = '\n';
   const pad = (s) => { const p = Math.max(0,Math.floor((W-s.length)/2)); return ' '.repeat(p)+s; };
   const hr = '-'.repeat(W);
   let t = '\x1B\x40';
   t += pad('*** CUISINE ***') + NL;
   t += pad('TAJ MAHAL') + NL;
   t += hr + NL;
-  t += 'TABLE: '+(order.table||'?')+'   REF: #'+ref + NL;
+  t += 'TABLE: '+(order.table||order.tableNumber||order.tableNum||'?')+'   REF: #'+ref + NL;
   t += 'HEURE: '+now + NL;
   t += hr + NL;
   (order.items||[]).forEach(i => {
@@ -926,7 +924,7 @@ function buildKitchenTicket(order) {
   t += hr + NL;
   if (order.note) { t += 'NOTE: '+(order.note||'').substring(0,40) + NL; }
   t += pad('-- Preparer cette commande --') + NL;
-  t += NL + NL + NL;
+  t += NL + NL + NL + NL + NL;
   t += '\x1D\x56\x00';
   return [{type:'raw', data:t}];
 }
@@ -934,7 +932,7 @@ function buildKitchenTicket(order) {
 async function sendToPrinter(printerName, data) {
   if (!isQZConnected()) { showNotif('QZ Tray non connecté'); return; }
   try {
-    var config = qz.configs.create(printerName, {raw:true, copies:1});
+    var config = qz.configs.create(printerName, { encoding: 'UTF-8' });
     await qz.print(config, data);
     showNotif('Impression envoyée à ' + printerName);
   } catch(e) { console.error('Print error:', e); showNotif('Erreur impression: '+e.message); }
