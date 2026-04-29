@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/rsvp@4.8.5/dist/rsvp.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/node-forge@1.3.1/dist/forge.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsrsasign/11.1.0/jsrsasign-all-min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.4/qz-tray.js"></script>
 <style>
 :root{
@@ -865,8 +866,7 @@ c/0dxUphNAW0ehfrGtepqw==
 function isQZConnected() { return typeof qz !== 'undefined' && qz.websocket && qz.websocket.isActive(); }
 function isAutoPrintEnabled() { const t = document.getElementById('auto-print-toggle'); return t ? t.checked : false; }
 
-// Not used - signing done inline in setSignaturePromise
-function signQZData(toSign) { return ''; }
+
 
 function buildReceptionTicket(order) {
   const now = new Date().toLocaleString('fr-FR');
@@ -1025,33 +1025,20 @@ window.connectQZ = async function() {
     if (isQZConnected()) { showNotif('QZ Tray déjà connecté'); return; }
     // Set up certificate for silent signing
     qz.security.setCertificatePromise(function(resolve, reject) { resolve(_CERT); });
-    qz.security.setSignatureAlgorithm('SHA512');
+    qz.security.setSignatureAlgorithm("SHA512");
     qz.security.setSignaturePromise(function(toSign) {
-      return new Promise(async function(resolve, reject) {
+      return function(resolve, reject) {
         try {
-          // Parse PKCS8 private key using Web Crypto API
-          var pemBody = _PRIVATE_KEY
-            .replace('-----BEGIN PRIVATE KEY-----', '')
-            .replace('-----END PRIVATE KEY-----', '')
-            .replace(/\s/g, '');
-          var binaryKey = Uint8Array.from(atob(pemBody), function(c) { return c.charCodeAt(0); });
-          var cryptoKey = await window.crypto.subtle.importKey(
-            'pkcs8',
-            binaryKey.buffer,
-            { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-512' },
-            false,
-            ['sign']
-          );
-          var msgBuffer = new TextEncoder().encode(toSign);
-          var sigBuffer = await window.crypto.subtle.sign('RSASSA-PKCS1-v1_5', cryptoKey, msgBuffer);
-          var sigArray = Array.from(new Uint8Array(sigBuffer));
-          var sigBase64 = btoa(String.fromCharCode.apply(null, sigArray));
-          resolve(sigBase64);
+          var sig = new KJUR.crypto.Signature({"alg": "SHA512withRSA"});
+          sig.init(_PRIVATE_KEY);
+          sig.updateString(toSign);
+          var hex = sig.sign();
+          resolve(stob64(hextorstr(hex)));
         } catch(e) {
-          console.error('QZ sign error:', e);
+          console.error('Sign error:', e);
           reject(e);
         }
-      });
+      };
     });
     await qz.websocket.connect();
     const badge = document.getElementById('qz-badge');
