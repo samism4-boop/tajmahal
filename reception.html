@@ -865,14 +865,8 @@ c/0dxUphNAW0ehfrGtepqw==
 function isQZConnected() { return typeof qz !== 'undefined' && qz.websocket && qz.websocket.isActive(); }
 function isAutoPrintEnabled() { const t = document.getElementById('auto-print-toggle'); return t ? t.checked : false; }
 
-function signQZData(toSign) {
-  try {
-    var pKey = forge.pki.privateKeyFromPem(_PRIVATE_KEY);
-    var md = forge.md.sha512.create();
-    md.update(toSign, 'utf8');
-    return forge.util.encode64(pKey.sign(md));
-  } catch(e) { console.error('QZ sign error:', e); return ''; }
-}
+// Not used - signing done inline in setSignaturePromise
+function signQZData(toSign) { return ''; }
 
 function buildReceptionTicket(order) {
   const now = new Date().toLocaleString('fr-FR');
@@ -1033,9 +1027,30 @@ window.connectQZ = async function() {
     qz.security.setCertificatePromise(function(resolve, reject) { resolve(_CERT); });
     qz.security.setSignatureAlgorithm('SHA512');
     qz.security.setSignaturePromise(function(toSign) {
-      return new Promise(function(resolve, reject) {
-        try { resolve(signQZData(toSign)); }
-        catch(e) { reject(e); }
+      return new Promise(async function(resolve, reject) {
+        try {
+          // Parse PKCS8 private key using Web Crypto API
+          var pemBody = _PRIVATE_KEY
+            .replace('-----BEGIN PRIVATE KEY-----', '')
+            .replace('-----END PRIVATE KEY-----', '')
+            .replace(/\s/g, '');
+          var binaryKey = Uint8Array.from(atob(pemBody), function(c) { return c.charCodeAt(0); });
+          var cryptoKey = await window.crypto.subtle.importKey(
+            'pkcs8',
+            binaryKey.buffer,
+            { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-512' },
+            false,
+            ['sign']
+          );
+          var msgBuffer = new TextEncoder().encode(toSign);
+          var sigBuffer = await window.crypto.subtle.sign('RSASSA-PKCS1-v1_5', cryptoKey, msgBuffer);
+          var sigArray = Array.from(new Uint8Array(sigBuffer));
+          var sigBase64 = btoa(String.fromCharCode.apply(null, sigArray));
+          resolve(sigBase64);
+        } catch(e) {
+          console.error('QZ sign error:', e);
+          reject(e);
+        }
       });
     });
     await qz.websocket.connect();
