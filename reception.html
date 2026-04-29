@@ -1040,7 +1040,7 @@ window.connectQZ = async function() {
     if (!window._qzKeepAlive) {
       window._qzKeepAlive = setInterval(() => {
         if (typeof qz !== 'undefined' && !qz.websocket.isActive()) {
-          qz.websocket.connect().catch(e => console.log('QZ reconnect:', e.message));
+          qz.websocket.connect().catch(e => {});
         }
       }, 15000);
     }
