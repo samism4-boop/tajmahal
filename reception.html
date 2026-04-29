@@ -1032,6 +1032,7 @@ window.connectQZ = async function() {
     if (isQZConnected()) { showNotif('QZ Tray déjà connecté'); return; }
     // Set up certificate for silent signing
     qz.security.setCertificatePromise(function(resolve, reject) { resolve(_CERT); });
+    qz.security.setSignatureAlgorithm('SHA512');
     qz.security.setSignaturePromise(function(hash) {
       return function(resolve, reject) { resolve(signQZData(hash)); };
     });
