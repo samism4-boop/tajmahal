@@ -1033,18 +1033,15 @@ window.connectQZ = async function() {
     qz.security.setCertificatePromise(function(resolve, reject) { resolve(_CERT); });
     qz.security.setSignatureAlgorithm('SHA512');
     qz.security.setSignaturePromise(function(toSign) {
-      return {
-        resolve: function(resolve, reject) {
-          try {
-            var pk = forge.pki.privateKeyFromPem(_PRIVATE_KEY);
-            var md = forge.md.sha512.create();
-            md.update(toSign, 'utf8');
-            var sig = pk.sign(md);
-            resolve(forge.util.encode64(sig));
-          } catch(e) {
-            console.error('QZ sign error:', e);
-            reject(e);
-          }
+      return function(resolve, reject) {
+        try {
+          var pk = forge.pki.privateKeyFromPem(_PRIVATE_KEY);
+          var md = forge.md.sha512.create();
+          md.update(toSign, 'utf8');
+          resolve(forge.util.encode64(pk.sign(md)));
+        } catch(e) {
+          console.error('QZ sign error:', e);
+          reject(e);
         }
       };
     });
