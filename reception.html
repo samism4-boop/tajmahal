@@ -1053,7 +1053,7 @@ window.connectQZ = async function() {
           }
         }
       };
-    };
+    });
     await qz.websocket.connect();
     if (!window._qzKeepAlive) {
       window._qzKeepAlive = setInterval(() => {
