@@ -1033,29 +1033,25 @@ window.connectQZ = async function() {
     qz.security.setCertificatePromise(function(resolve, reject) { resolve(_CERT); });
     qz.security.setSignatureAlgorithm('SHA512');
     qz.security.setSignaturePromise(function(toSign) {
-      return {
-        resolve: async function(resolve, reject) {
-          try {
-            var pemBody = _PRIVATE_KEY
-              .replace('-----BEGIN PRIVATE KEY-----', '')
-              .replace('-----END PRIVATE KEY-----', '')
-              .replace(/[\s\n\r]/g, '');
-            var binaryKey = Uint8Array.from(atob(pemBody), function(c) { return c.charCodeAt(0); });
-            var cryptoKey = await window.crypto.subtle.importKey(
-              'pkcs8', binaryKey.buffer,
-              { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-512' },
-              false, ['sign']
-            );
-            var msgBuffer = new TextEncoder().encode(toSign);
-            var sigBuffer = await window.crypto.subtle.sign('RSASSA-PKCS1-v1_5', cryptoKey, msgBuffer);
-            var sigArray = Array.from(new Uint8Array(sigBuffer));
-            resolve(btoa(String.fromCharCode.apply(null, sigArray)));
-          } catch(e) {
-            console.error('QZ sign error:', e);
-            reject(e);
-          }
-        }
-      };
+      return new RSVP.Promise(function(resolve, reject) {
+        var pemBody = _PRIVATE_KEY
+          .replace('-----BEGIN PRIVATE KEY-----', '')
+          .replace('-----END PRIVATE KEY-----', '')
+          .replace(/[\s\n\r]/g, '');
+        var binaryKey = Uint8Array.from(atob(pemBody), function(c) { return c.charCodeAt(0); });
+        window.crypto.subtle.importKey(
+          'pkcs8', binaryKey.buffer,
+          { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-512' },
+          false, ['sign']
+        ).then(function(cryptoKey) {
+          return window.crypto.subtle.sign('RSASSA-PKCS1-v1_5', cryptoKey, new TextEncoder().encode(toSign));
+        }).then(function(sigBuffer) {
+          resolve(btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(sigBuffer)))));
+        }).catch(function(e) {
+          console.error('QZ sign error:', e);
+          reject(e);
+        });
+      });
     });
     await qz.websocket.connect();
     if (!window._qzKeepAlive) {
