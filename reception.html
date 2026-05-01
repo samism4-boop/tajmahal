@@ -459,7 +459,7 @@ GYXKvo/wAT2Y2paDFEexepTRZefuX3U54nXTOj1h8Nhx2pndEfPm8RkTcUVlym9V
 uzI9pIpy14SxE9Ofigh0cOWlelHD/qxi7vYjpqwyI4T0ALA5Of6uw0ZqFoNFFZLR
 8AA2+RVPOwqFxRJV98FOaoAnw2NSm4cY8aCxPRE+2A==
 -----END CERTIFICATE-----`;
-var _PRIVATE_KEY = `-----BEGIN PRIVATE KEY-----
+var _KEY = `-----BEGIN PRIVATE KEY-----
 MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCkFVLPxSnIegz+
 2BYZWJ7qkUmb/3xOuZv2SjJk2gbujyNbJb/jaqqeW+ZSRWCphpqPuUmUxzs12JLp
 tJ+YXlYYX9F8szP+WMidd0DWH3TXbWS6b3c5/PLEOvrNU7DgLoXTtSQzRZcMLbby
@@ -1030,19 +1030,23 @@ window.connectQZ = async function() {
   try {
     if (isQZConnected()) { showNotif('QZ Tray déjà connecté'); return; }
     // Set up certificate for silent signing
-    qz.security.setCertificatePromise(function(resolve, reject) { resolve(_CERT); });
+    qz.security.setCertificatePromise(function(resolve){ resolve(_CERT); });
     qz.security.setSignatureAlgorithm('SHA512');
     qz.security.setSignaturePromise(function(toSign) {
       return function(resolve, reject) {
         try {
-          var pk = forge.pki.privateKeyFromPem(_PRIVATE_KEY);
-          var md = forge.md.sha512.create();
-          md.update(toSign, 'utf8');
-          resolve(forge.util.encode64(pk.sign(md)));
-        } catch(e) {
-          console.error('QZ sign error:', e);
-          reject(e);
-        }
+          var pemKey = _KEY.replace('-----BEGIN PRIVATE KEY-----','').replace('-----END PRIVATE KEY-----','').replace(/\n/g,'').trim();
+          var keyBytes = Uint8Array.from(atob(pemKey), function(c){ return c.charCodeAt(0); });
+          window.crypto.subtle.importKey('pkcs8', keyBytes.buffer, {name:'RSASSA-PKCS1-v1_5',hash:'SHA-512'}, false, ['sign'])
+          .then(function(cryptoKey){
+            var msgBytes = new TextEncoder().encode(toSign);
+            return window.crypto.subtle.sign('RSASSA-PKCS1-v1_5', cryptoKey, msgBytes);
+          })
+          .then(function(sig){
+            resolve(btoa(String.fromCharCode.apply(null, new Uint8Array(sig))));
+          })
+          .catch(function(e){ console.error('Sign error:',e); resolve(''); });
+        } catch(e){ console.error('Sign error:',e); resolve(''); }
       };
     });
     await qz.websocket.connect();
