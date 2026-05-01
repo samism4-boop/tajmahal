@@ -912,15 +912,19 @@ function buildKitchenTicket(order) {
   let t = '\x1B\x40';
   t += pad('*** CUISINE ***') + NL;
   t += pad('TAJ MAHAL') + NL;
+  t += pad('Restaurant Indien') + NL;
   t += hr + NL;
   t += row('TABLE:', ''+tableNum) + NL;
   t += row('REF:', '#'+ref) + NL;
   t += row('HEURE:', now) + NL;
   t += hr + NL;
   (order.items||[]).forEach(i => {
-    const nm = 'x'+(i.qty||1)+' '+(i.name||'').substring(0,26);
-    t += nm + NL;
+    const nm = 'x'+(i.qty||1)+' '+(i.name||'').substring(0,20);
+    const pr = ((i.price||0)*(i.qty||1)).toFixed(2)+'E';
+    t += row(nm, pr) + NL;
   });
+  t += hr + NL;
+  t += row('TOTAL:', (order.total||0).toFixed(2)+'E') + NL;
   t += hr + NL;
   if (order.note) { t += 'NOTE: '+(order.note||'').substring(0,40) + NL; }
   t += pad('-- Preparer cette commande --') + NL;
